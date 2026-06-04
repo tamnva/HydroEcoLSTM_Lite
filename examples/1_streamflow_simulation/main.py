@@ -10,7 +10,7 @@ from hydroecolstm_lite.utility.evaluation_function import nse
 # Read configuration file, please modify the path to the config.yml file
 config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/1_streamflow_simulation/config.yml")
 
-data, model, loss_epoch = run_config(config)
+data, model, loss_epoch, scaler = run_config(config)
 
 y_test_simulated = model(data['test_data_scaled'])
 
