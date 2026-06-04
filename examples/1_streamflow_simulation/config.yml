@@ -87,7 +87,7 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 70
+n_epochs: 20
 
 # Learning rate
 learning_rate: 0.005

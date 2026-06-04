@@ -17,6 +17,7 @@ class Lstm_Linears(nn.Module):
         self.linears_num_layers = config["Regression"]["num_layers"]
         self.linears_activation_function = config["Regression"]["activation_function"]
         self.linears_num_neurons = self.find_num_neurons(config=config)
+        self.target_features = config["target_features"]
         self.input_features = (config["input_timeseries_features"] + 
                                config["input_static_features"])
         
@@ -36,26 +37,7 @@ class Lstm_Linears(nn.Module):
      
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         
-        if isinstance(x, pd.DataFrame):
-            ids = x['id'].unique()
-            
-            self.model.eval() 
-            
-            with torch.inference_mode(): 
-                for id in ids:
-                    y_predict_id, _ = self.lstm(torch.tensor(
-                        x[x['id'] == id][self.input_features].values,
-                        dtype=torch.float32))
-                    
-                    if id == ids[0]:
-                        y_predict = y_predict_id
-                    else:
-                        y_predict = torch.cat([y_predict, y_predict_id], dim=0)
-                        
-            
-                
-        else:
-            y_predict, _ = self.lstm(x)
+        y_predict, _ = self.lstm(x)
         
         return self.linear(y_predict) 
     

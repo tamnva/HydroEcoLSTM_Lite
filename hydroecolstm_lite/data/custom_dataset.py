@@ -8,10 +8,10 @@ class CustomDataset(Dataset):
                  input_features:str, 
                  target_features:str,
                  warmup_length:int,
-                 sequence_length:int):        
+                 sequence_length:int):
+        
         self.X = torch.tensor(data[input_features].values, 
                               dtype=torch.float32)
-        
         
         self.Y = torch.tensor(data[target_features].values,
                               dtype=torch.float32)

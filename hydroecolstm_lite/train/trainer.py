@@ -22,13 +22,17 @@ class Trainer():
         self.best_train_loss = None
         self.warmup_length = config['warmup_length']
         self.sequence_length = config['sequence_length']
-        self.target_features = config['target_features']
-        self.input_features = (config['input_timeseries_features'] + 
-                               config['input_static_features'])
+        self.target_features = model.target_features
+        self.input_features = model.input_features
         
     # Train function
     def train(self, data_train_scaled:pd.DataFrame, 
               data_valid_scaled:pd.DataFrame):
+        
+        # Make sure column names order as in the model
+        col_names = ['id', 'time'] + self.input_features + self.target_features
+        data_train_scaled = data_train_scaled[col_names]
+        data_valid_scaled = data_valid_scaled[col_names]
         
         # Optimization function
         optim = torch.optim.Adam(self.model.parameters(), lr=self.lr)
