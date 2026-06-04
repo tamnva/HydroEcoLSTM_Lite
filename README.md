@@ -22,7 +22,7 @@ conda env create -f environment.yml
 conda activate hydroecolstm_lite
 
 # 2. Install the lastest version from github
-pip install git+https://github.com/tamnva/HydroEcoLSTM_Lite.git
+pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/master.zip
 
 # 3. Run the example in this HydroEcoLSTM/examples/1_streamflow_simulation
 #    "main.py":     python file for running this example
