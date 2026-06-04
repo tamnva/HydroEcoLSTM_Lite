@@ -9,39 +9,39 @@ def read_train_valid_test_data(config:dict=None) -> dict:
     require_columns = [
         'id', 
         'time', 
-        *config['input_dynamic_features'],         
+        *config['input_timeseries_features'],         
         *config['target_features']
         ]
     
-    dynamic_data = pd.read_csv(
-        config["dynamic_data_file"][0],
+    timeseries_data = pd.read_csv(
+        config["timeseries_data_file"][0],
         usecols=require_columns,
         parse_dates=["time"],
         date_format="%Y-%m-%d %H:%M"
         )
     
-    float_cols = dynamic_data.select_dtypes(include="float").columns 
-    dynamic_data[float_cols] = dynamic_data[float_cols].astype("float32")
+    float_cols = timeseries_data.select_dtypes(include="float").columns 
+    timeseries_data[float_cols] = timeseries_data[float_cols].astype("float32")
     
     # To save memory later
-    dynamic_data["id"] = dynamic_data["id"].astype("category")
+    timeseries_data["id"] = timeseries_data["id"].astype("category")
     
-    train_data = dynamic_data[
-        dynamic_data["id"].isin(config["id_train"]) & 
-        dynamic_data["time"].between(config["train_period"][0], 
+    train_data = timeseries_data[
+        timeseries_data["id"].isin(config["id_train"]) & 
+        timeseries_data["time"].between(config["train_period"][0], 
                                      config["train_period"][1])]
     
-    valid_data = dynamic_data[
-        dynamic_data["id"].isin(config["id_train"]) &
-        dynamic_data["time"].between(config["valid_period"][0], 
+    valid_data = timeseries_data[
+        timeseries_data["id"].isin(config["id_train"]) &
+        timeseries_data["time"].between(config["valid_period"][0], 
                                      config["valid_period"][1])]
     
-    test_data = dynamic_data[
-        dynamic_data["id"].isin(config["id_test"]) & 
-        dynamic_data["time"].between(config["test_period"][0], 
+    test_data = timeseries_data[
+        timeseries_data["id"].isin(config["id_test"]) & 
+        timeseries_data["time"].between(config["test_period"][0], 
                                      config["test_period"][1])]
     
-    del dynamic_data
+    del timeseries_data
     
     # Read static input data file    
     if 'input_static_features' in config:
@@ -85,29 +85,29 @@ def read_inference_data(config:dict=None) -> dict:
     require_columns = [
         'id',
         'time',
-        *config['input_dynamic_features']
+        *config['input_timeseries_features']
         ]
     
-    dynamic_data = pd.read_csv(
-        config['dynamic_data_file_inference'][0],
+    timeseries_data = pd.read_csv(
+        config['timeseries_data_file_inference'][0],
         usecols=require_columns,
         parse_dates=["time"],
         date_format="%Y-%m-%d %H:%M"
         )
     
-    float_cols = dynamic_data.select_dtypes(include="float").columns 
-    dynamic_data[float_cols] = dynamic_data[float_cols].astype("float32")
+    float_cols = timeseries_data.select_dtypes(include="float").columns 
+    timeseries_data[float_cols] = timeseries_data[float_cols].astype("float32")
     
     # To save memory later
-    dynamic_data["id"] = dynamic_data["id"].astype("category")
+    timeseries_data["id"] = timeseries_data["id"].astype("category")
     
-    inference_data = dynamic_data[require_columns][
-        dynamic_data["id"].isin(config["id_train"]) & 
-        (dynamic_data["time"] >= config["test_period"][0]) & 
-        (dynamic_data["time"] <= config["test_period"][1])
+    inference_data = timeseries_data[require_columns][
+        timeseries_data["id"].isin(config["id_train"]) & 
+        (timeseries_data["time"] >= config["test_period"][0]) & 
+        (timeseries_data["time"] <= config["test_period"][1])
         ]
     
-    del dynamic_data
+    del timeseries_data
     
     # Read static input data file    
     if 'input_static_features' in config:
@@ -145,8 +145,8 @@ def read_scale_inference_data(config, scaler):
 
 def get_scaler_name(config):
     
-    scaler_name = config["scaler_input_dynamic_features"]*len(
-        config['input_dynamic_features']) + \
+    scaler_name = config["scaler_input_timeseries_features"]*len(
+        config['input_timeseries_features']) + \
     config["scaler_target_features"]* len(config["target_features"])
     
     if "input_static_features" in config.keys():

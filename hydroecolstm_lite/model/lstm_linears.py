@@ -17,7 +17,7 @@ class Lstm_Linears(nn.Module):
         self.linears_num_layers = config["Regression"]["num_layers"]
         self.linears_activation_function = config["Regression"]["activation_function"]
         self.linears_num_neurons = self.find_num_neurons(config=config)
-        self.input_features = (config["input_dynamic_features"] + 
+        self.input_features = (config["input_timeseries_features"] + 
                                config["input_static_features"])
         
         # Standard LSTM from torch

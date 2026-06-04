@@ -23,7 +23,7 @@ class Trainer():
         self.warmup_length = config['warmup_length']
         self.sequence_length = config['sequence_length']
         self.target_features = config['target_features']
-        self.input_features = (config['input_dynamic_features'] + 
+        self.input_features = (config['input_timeseries_features'] + 
                                config['input_static_features'])
         
     # Train function

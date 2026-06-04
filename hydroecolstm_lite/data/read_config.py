@@ -14,13 +14,13 @@ def read_config(config_file):
         "id_train",
         "id_valid",
         "id_test",
-        "input_dynamic_features",
+        "input_timeseries_features",
         "target_features", 
         "train_period", 
         "test_period",  
         "n_epochs", 
         "learning_rate", 
-        "dynamic_data_file"
+        "timeseries_data_file"
         ]
  
     for key in keys: 

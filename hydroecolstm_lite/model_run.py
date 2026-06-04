@@ -10,7 +10,7 @@ def run_config(config):
 
     data = read_train_valid_test_data(config)
     
-    # Scale/transformer name for static, dynamic, and target features
+    # Scale/transformer name for static, timeseries, and target features
     scaler_names = get_scaler_name(config)
     
     # Scaler/transformer

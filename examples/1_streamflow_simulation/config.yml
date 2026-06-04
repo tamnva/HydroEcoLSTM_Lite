@@ -1,5 +1,5 @@
 # path to time series data file, input and target features should be in this file
-dynamic_data_file: &dynamic_file
+timeseries_data_file: &timeseries_file
   - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/1_streamflow_simulation/data/time_series.csv
 
 # (optional input) path to catchment attributes file
@@ -18,12 +18,12 @@ input_static_features:
   - aridity
   - pet_mean
 
-# input dynamic features - column name(s) of the dynamic_data_file
-input_dynamic_features:
+# input timeseries features - column name(s) of the timeseries_data_file
+input_timeseries_features:
   - precipitation_mm_d
   - temperature_mean_degC
 
-# target output - column name(s) of the dynamic_data_file
+# target output - column name(s) of the timeseries_data_file
 target_features:
   - discharge_vol_m3_s
 
@@ -68,8 +68,8 @@ Regression:
   # Number of layer
   num_layers: 1
 
-# Scaler for input dynamic features: z_score, min_max, none
-scaler_input_dynamic_features:
+# Scaler for input timeseries features: z_score, min_max, none
+scaler_input_timeseries_features:
   - z_score
   
 # Scaler for input static features: z_score, min_max, none
@@ -118,8 +118,8 @@ eval_function: NSE
 # path to the static data file contains static features for inference catchments 
 static_data_file_inference: *static_file
 
-# path to the dynamic data file contains dynamic features for inference catchments 
-dynamic_data_file_inference: *dynamic_file
+# path to the timeseries data file contains timeseries features for inference catchments 
+timeseries_data_file_inference: *timeseries_file
 
 # start and ending of the inference period, must be in yyyy-mm-dd hh:mm format
 inference_period: 
