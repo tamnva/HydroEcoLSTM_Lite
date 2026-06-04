@@ -92,16 +92,18 @@ class Trainer():
             self.model.eval()
 
             # Loop over batches
-            for x_batch, y_batch in xy_valid_batch:
-                
-                # Forward pass:
-                y_predict = self.model(x_batch)
-                
-                # Get Loss
-                loss = self.loss_function(y_batch, y_predict)
-                
-                # Save traning loss 
-                valid_loss_batch.append(loss.item())
+            with torch.inference_mode():
+                for x_batch, y_batch in xy_valid_batch:
+                    
+                    # Forward pass:
+                    y_predict = self.model(x_batch)
+                    
+                    # Get Loss
+                    loss = self.loss_function(y_batch, y_predict)
+                    
+                    # Save traning loss 
+                    valid_loss_batch.append(loss.item())
+            
 
             # Store average loss per epoch for training and validation
             train_loss_epoch.append(np.average(train_loss_batch))

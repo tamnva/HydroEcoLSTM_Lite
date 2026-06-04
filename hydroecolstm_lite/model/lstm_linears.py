@@ -39,15 +39,20 @@ class Lstm_Linears(nn.Module):
         if isinstance(x, pd.DataFrame):
             ids = x['id'].unique()
             
-            for id in ids:
-                y_predict_id, _ = self.lstm(torch.tensor(
-                    x[x['id'] == id][self.input_features].values,
-                    dtype=torch.float32))
-                
-                if id == ids[0]:
-                    y_predict = y_predict_id
-                else:
-                    y_predict = torch.cat([y_predict, y_predict_id], dim=0)
+            self.model.eval() 
+            
+            with torch.inference_mode(): 
+                for id in ids:
+                    y_predict_id, _ = self.lstm(torch.tensor(
+                        x[x['id'] == id][self.input_features].values,
+                        dtype=torch.float32))
+                    
+                    if id == ids[0]:
+                        y_predict = y_predict_id
+                    else:
+                        y_predict = torch.cat([y_predict, y_predict_id], dim=0)
+                        
+            
                 
         else:
             y_predict, _ = self.lstm(x)

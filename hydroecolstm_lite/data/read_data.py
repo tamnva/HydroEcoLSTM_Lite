@@ -59,10 +59,16 @@ def read_train_valid_test_data(config:dict=None) -> dict:
         static_data["id"] = static_data["id"].astype("category")
         static_data = static_data.set_index("id")
         
-        # TODO: This takes a lot of memory
-        train_data = train_data.join(static_data, on="id")
-        valid_data = valid_data.join(static_data, on="id")
-        test_data = test_data.join(static_data, on="id")
+        # map is better than join in term of memory
+        for name in config["input_static_features"]:
+            train_data[name] = train_data['id'].map(
+                static_data[name]).astype("float32")
+            
+            valid_data[name] = valid_data['id'].map(
+                static_data[name]).astype("float32")
+            
+            test_data[name] = test_data['id'].map(
+                static_data[name]).astype("float32")
 
         
     return {'train_data':train_data,
@@ -119,8 +125,10 @@ def read_inference_data(config:dict=None) -> dict:
         static_data["id"] = static_data["id"].astype("category")
         static_data = static_data.set_index("id")
         
-        # TODO: This takes a lot of memory
-        inference_data = inference_data.join(static_data, on="id")
+        # map is better than join in term of memory
+        for name in config["input_static_features"]:
+            inference_data[name] = inference_data['id'].map(
+                static_data[name]).astype("float32")
         
     return {'inference_data':inference_data}
 
