@@ -1,6 +1,4 @@
-### HydroEcoLSTM_Lite <a href="https://github.com/tamnva/hydroecolstm/tree/master/docs/images/logo.svg"><img src="docs/images/logo.svg" align="right" height="120" /></a>
-
-[![Documentation Status](https://readthedocs.org/projects/hydroecolstm/badge/?version=latest)](https://hydroecolstm.readthedocs.io/en/latest/?badge=latest) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10673255.svg)](https://doi.org/10.5281/zenodo.10673255) [![PyPI Latest Release](https://img.shields.io/pypi/v/hydroecolstm)](https://pypi.org/project/hydroecolstm/) 
+### HydroEcoLSTM_Lite 
 
 
 - HydroEcoLSTM_Lite is a Lite version of the HydroEcoLSTM package. 
@@ -17,9 +15,11 @@
 Installation with Anaconda using environment file following the steps listed below. 
 
 ```python
-# 1. Create the environment from environment.yml file (see link above)
+# 1. Download the environment file from https://github.com/tamnva/HydroEcoLSTM_Lite/tree/master/environment/environment.yml file
+
+# 2. Create virtual environment from that environment file using anaconda
 conda env create -f environment.yml
-conda activate hydroecolstm_env
+conda activate hydroecolstm_lite
 
 # 2. Install the lastest version from github
 pip install git+https://github.com/tamnva/HydroEcoLSTM_Lite.git
