@@ -1,14 +1,14 @@
 
-from hydroecolstm.model_run import run_config
-from hydroecolstm.data.read_config import read_config
-from hydroecolstm.utility.evaluation_function import nse
+from hydroecolstm_lite.model_run import run_config
+from hydroecolstm_lite.data.read_config import read_config
+from hydroecolstm_lite.utility.evaluation_function import nse
 
 #-----------------------------------------------------------------------------#
 #                        Set up, train, test model                            #
 #-----------------------------------------------------------------------------#
 
 # Read configuration file, please modify the path to the config.yml file
-config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM/examples/1_streamflow_simulation/config.yml")
+config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/1_streamflow_simulation/config.yml")
 
 data, model, loss_epoch = run_config(config)
 

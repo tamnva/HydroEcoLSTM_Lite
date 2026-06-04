@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-from ray import train
-import ray
 import tempfile
 import os
 import copy
@@ -168,12 +166,7 @@ class Trainer():
             loss_epoch = self._create_train_loss_df(train_loss_epoch, 
                                                     valid_loss_epoch, 
                                                     check_point)
-            
-            if ray.train._internal.session.get_session(): 
-                train.report({'loss': train_loss_epoch[-1],
-                              'loss_epoch': loss_epoch},
-                             checkpoint=checkpoint)
-            
+
     # Create data frame of epoch number, train loss, valid loss
     def _create_train_loss_df(self, train_loss_epoch, valid_loss_epoch, 
                               check_point):
