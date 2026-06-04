@@ -37,9 +37,20 @@ class Lstm_Linears(nn.Module):
     def forward(self, x:torch.Tensor) -> torch.Tensor:
         
         if isinstance(x, pd.DataFrame):
-            x = torch.tensor(x[self.input_features].values, dtype=torch.float32)
-        
-        y_predict, _ = self.lstm(x)
+            ids = x['id'].unique()
+            
+            for id in ids:
+                y_predict_id, _ = self.lstm(torch.tensor(
+                    x[x['id'] == id][self.input_features].values,
+                    dtype=torch.float32))
+                
+                if id == ids[0]:
+                    y_predict = y_predict_id
+                else:
+                    y_predict = torch.cat([y_predict, y_predict_id], dim=0)
+                
+        else:
+            y_predict, _ = self.lstm(x)
         
         return self.linear(y_predict) 
     
