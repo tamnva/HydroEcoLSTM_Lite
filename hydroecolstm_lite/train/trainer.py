@@ -1,6 +1,7 @@
+import torch
+import copy
 import numpy as np
 import pandas as pd
-import torch
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
@@ -33,10 +34,6 @@ class Trainer():
               timeseries_data_train:pd.DataFrame,
               timeseries_data_valid:pd.DataFrame,
               static_data:pd.DataFrame):
-        
- #       timeseries_data_train = data_scaled['timeseries_data_train'].copy()
- #       timeseries_data_valid = data_scaled['timeseries_data_valid'].copy()
- #       static_data = data_scaled['static_data'].copy()
         
         # Make sure column names order as in the model
         col_names = (['id', 'time'] + 
@@ -75,12 +72,12 @@ class Trainer():
         train_loss_epoch = []
         valid_loss_epoch = []
         
-        # initialize early stoping
-        early_stopping = EarlyStopping(patience=self.patience, verbose=False,
-                                       path=self.out_dir)
+        patience = 0
         
         # Train the model
         for epoch in range(self.n_epochs):
+            
+            patience += 1
             
             # Create batch data for each epoch
             xy_train_batch = DataLoader(xy_train, self.batch_size, shuffle=True)
@@ -138,86 +135,28 @@ class Trainer():
             print(f"Epoch [{epoch+1}/{self.n_epochs}]:", 
                   f"train_loss = {train_loss_epoch[-1]:.8f},",
                   f"valid_loss = {valid_loss_epoch[-1]:.8f}")
-                
-            # Early stopping based on validation loss and make checkpoint            
-            if early_stopping.early_stop:
-                print("Early stopping.")
+            
+            if epoch == 0:
+                best_loss = np.average(valid_loss_batch)
+                self.best_state_dict = copy.deepcopy(self.model.state_dict())
+            else:
+                if np.average(valid_loss_batch) < best_loss:
+                    patience = 0
+                    best_loss = np.average(valid_loss_batch)
+                    self.best_state_dict = copy.deepcopy(
+                        self.model.state_dict()
+                        )
+
+            if patience > self.patience:
+                print("Early stopping")
                 break
-            
-        # If the model does not stops until the last epoch
-        # It means that the best model is from last epoch
-        if (epoch + 1) == self.n_epochs:
-            print("Validation loss continue decreasing. Take last model")
-            
-        else:
-            # Load the last checkpoint with the best model
-            self.model.load_state_dict(self.best_state_dict)
-            
-            # Set model to eval mode
-            self.model.eval()
-            pass
+        
+        
+        self.model.load_state_dict(self.best_state_dict)
+        print(f"Model with the lowest validation loss was selected: {best_loss:.8f}")
             
         self.loss_epoch = pd.DataFrame({
             'train_loss': train_loss_epoch,
             'valid_loss': valid_loss_epoch})
 
         return self.model
-    
-# ----------------------------------------------------------------------------#
-# The EarlyStopping code was copied from                                     #
-# https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
-# MIT License                                                                 #
-# Copyright (c) 2018 Bjarte Mehus Sunde                                       #
-#                                                                             #                                       #
-# ----------------------------------------------------------------------------#
-class EarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, verbose=False, delta=0, path:str=None, trace_func=print):
-        """
-        Args:
-            patience (int): How long to wait after last time validation loss improved.
-                            Default: 7
-            verbose (bool): If True, prints a message for each validation loss improvement. 
-                            Default: False
-            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
-                            Default: 0
-            path (str): Path for the checkpoint to be saved to.
-                            Default: 'checkpoint.pt'
-            trace_func (function): trace print function.
-                            Default: print            
-        """
-        self.patience = patience
-        self.verbose = verbose
-        self.counter = 0
-        self.best_score = None
-        self.early_stop = False
-        self.val_loss_min = np.inf
-        self.delta = delta
-        self.trace_func = trace_func
-    def __call__(self, val_loss, model):
-
-        score = -val_loss
-        flag = False
-
-        if self.best_score is None:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            flag = True
-        elif score < self.best_score + self.delta:
-            self.counter += 1
-            if self.verbose:
-                self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
-            if self.counter >= self.patience:
-                self.early_stop = True
-        else:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            self.counter = 0
-            flag = True
-        return flag
-
-    def save_checkpoint(self, val_loss, model):
-        '''Saves model when validation loss decrease.'''
-        if self.verbose:
-            self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        self.val_loss_min = val_loss

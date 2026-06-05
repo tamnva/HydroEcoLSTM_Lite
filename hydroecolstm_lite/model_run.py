@@ -43,5 +43,5 @@ def run_config(config):
         
     loss_epoch = trainer.loss_epoch
         
-    return data_scaled, scaler, model, loss_epoch
+    return data_scaled, scaler, model, trainer
 

@@ -11,7 +11,7 @@ from hydroecolstm_lite.utility.evaluation_function import nse
 # Read configuration file, please modify the path to the config.yml file
 config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/1_streamflow_simulation/config.yml")
 
-data_scaled, scaler, model, loss_epoch = run_config(config)
+data_scaled, scaler, model, trainer = run_config(config)
 
 # Combine time series and statics
 test_data_scaled = combine_timeseries_static(
