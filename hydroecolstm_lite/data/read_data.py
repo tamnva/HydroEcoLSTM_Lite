@@ -167,13 +167,14 @@ def get_scaler_name(config, timeseries = True):
 def combine_timeseries_static(timeseries_data:pd.DataFrame, 
                               static_data:pd.DataFrame,
                               model,
-                              keep_target_features = False):
+                              keep_target_features=True):
     
     if keep_target_features: 
-        col_names = (['id', 'time'] + model.input_features)
+        col_names = (['id', 'time'] + model.input_timeseries_features + 
+                     model.target_features)
     else:
-        col_names = (['id', 'time'] + model.input_timeseries_features)
-    
+        col_names = ['id', 'time'] + model.input_timeseries_features
+        
     # Select and resort column order
     combined_data = timeseries_data[col_names].copy()
     
@@ -183,10 +184,9 @@ def combine_timeseries_static(timeseries_data:pd.DataFrame,
         combined_data[name] = combined_data['id'].map(
             static_data[name]).astype("float32")
     
-    return(combined_data)
+    return combined_data
     
-    
-    
+
     
     
     

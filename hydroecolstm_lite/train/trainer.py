@@ -34,22 +34,26 @@ class Trainer():
               timeseries_data_valid:pd.DataFrame,
               static_data:pd.DataFrame):
         
+ #       timeseries_data_train = data_scaled['timeseries_data_train'].copy()
+ #       timeseries_data_valid = data_scaled['timeseries_data_valid'].copy()
+ #       static_data = data_scaled['static_data'].copy()
+        
         # Make sure column names order as in the model
         col_names = (['id', 'time'] + 
                      self.input_timeseries_features + 
                      self.target_features)
-        
+
         # Select and resort column order
         timeseries_data_train = timeseries_data_train[col_names]
         timeseries_data_valid = timeseries_data_valid[col_names]
         
         # Now join time series and static data together
-        timeseries_data_train = data_to_model_input(
-            timeseries_data_train, static_data, self.model, True
+        timeseries_data_train = combine_timeseries_static(
+            timeseries_data_train, static_data, self.model
             )
         
-        timeseries_data_valid = data_to_model_input(
-            timeseries_data_valid, static_data, self.model, True
+        timeseries_data_valid = combine_timeseries_static(
+            timeseries_data_valid, static_data, self.model
             )
         
         # Optimization function
