@@ -1,7 +1,6 @@
 
 import torch
 from torch import nn
-import pandas as pd
 from hydroecolstm_lite.model.linears import Linears
 
 # LSTM + Linears
@@ -17,11 +16,17 @@ class Lstm_Linears(nn.Module):
         self.linears_num_layers = config["Regression"]["num_layers"]
         self.linears_activation_function = config["Regression"]["activation_function"]
         self.linears_num_neurons = self.find_num_neurons(config=config)
-        self.target_features = config["target_features"]
-        self.input_features = (config["input_timeseries_features"] + 
-                               config["input_static_features"])
+        self.input_timeseries_features = config["input_timeseries_features"] 
+        self.input_static_features = config["input_static_features"]
         
-        # Standard LSTM from torch
+        # Columns of input tensor should follow this order
+        self.input_features = (self.input_timeseries_features + 
+                               self.input_static_features)
+        
+        # Columns of output tensor will be this order
+        self.target_features = config["target_features"]
+        
+        # Standard LSTM from torch input = [batch, sequence, features]
         self.lstm = nn.LSTM(input_size=len(self.input_features), 
                             hidden_size=self.hidden_size, 
                             num_layers=self.num_layers,

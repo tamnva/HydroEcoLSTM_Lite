@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
+from hydroecolstm_lite.data.read_data import combine_timeseries_static
 
 # LSTM + Linears
 class Trainer():
@@ -23,26 +24,43 @@ class Trainer():
         self.warmup_length = config['warmup_length']
         self.sequence_length = config['sequence_length']
         self.target_features = model.target_features
+        self.input_timeseries_features = model.input_timeseries_features
+        self.input_static_features = model.input_static_features
         self.input_features = model.input_features
         
     # Train function
-    def train(self, data_train_scaled:pd.DataFrame, 
-              data_valid_scaled:pd.DataFrame):
+    def train(self, 
+              timeseries_data_train:pd.DataFrame,
+              timeseries_data_valid:pd.DataFrame,
+              static_data:pd.DataFrame):
         
         # Make sure column names order as in the model
-        col_names = ['id', 'time'] + self.input_features + self.target_features
-        data_train_scaled = data_train_scaled[col_names]
-        data_valid_scaled = data_valid_scaled[col_names]
+        col_names = (['id', 'time'] + 
+                     self.input_timeseries_features + 
+                     self.target_features)
+        
+        # Select and resort column order
+        timeseries_data_train = timeseries_data_train[col_names]
+        timeseries_data_valid = timeseries_data_valid[col_names]
+        
+        # Now join time series and static data together
+        timeseries_data_train = data_to_model_input(
+            timeseries_data_train, static_data, self.model, True
+            )
+        
+        timeseries_data_valid = data_to_model_input(
+            timeseries_data_valid, static_data, self.model, True
+            )
         
         # Optimization function
         optim = torch.optim.Adam(self.model.parameters(), lr=self.lr)
                 
         # Create custom dataset
-        xy_train = CustomDataset(data_train_scaled, self.input_features, 
+        xy_train = CustomDataset(timeseries_data_train, self.input_features, 
                                  self.target_features, self.warmup_length,
                                  self.sequence_length)
         
-        xy_valid = CustomDataset(data_valid_scaled, self.input_features, 
+        xy_valid = CustomDataset(timeseries_data_valid, self.input_features, 
                                  self.target_features, self.warmup_length,
                                  self.sequence_length)
         

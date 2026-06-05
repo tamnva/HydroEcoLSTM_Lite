@@ -26,17 +26,17 @@ def read_train_valid_test_data(config:dict=None) -> dict:
     # To save memory later
     timeseries_data["id"] = timeseries_data["id"].astype("category")
     
-    train_data = timeseries_data[
+    data_train = timeseries_data[
         timeseries_data["id"].isin(config["id_train"]) & 
         timeseries_data["time"].between(config["train_period"][0], 
                                      config["train_period"][1])]
     
-    valid_data = timeseries_data[
+    data_valid = timeseries_data[
         timeseries_data["id"].isin(config["id_train"]) &
         timeseries_data["time"].between(config["valid_period"][0], 
                                      config["valid_period"][1])]
     
-    test_data = timeseries_data[
+    data_test = timeseries_data[
         timeseries_data["id"].isin(config["id_test"]) & 
         timeseries_data["time"].between(config["test_period"][0], 
                                      config["test_period"][1])]
@@ -58,22 +58,14 @@ def read_train_valid_test_data(config:dict=None) -> dict:
         
         static_data["id"] = static_data["id"].astype("category")
         static_data = static_data.set_index("id")
-        
-        # map is better than join in term of memory
-        for name in config["input_static_features"]:
-            train_data[name] = train_data['id'].map(
-                static_data[name]).astype("float32")
-            
-            valid_data[name] = valid_data['id'].map(
-                static_data[name]).astype("float32")
-            
-            test_data[name] = test_data['id'].map(
-                static_data[name]).astype("float32")
+    else:
+        static_data = None
 
         
-    return {'train_data':train_data,
-            'valid_data':valid_data, 
-            'test_data':test_data}
+    return {'timeseries_data_train':data_train,
+            'timeseries_data_valid':data_valid, 
+            'timeseries_data_test':data_test,
+            'static_data':static_data}
 
 
 #-----------------------------------------------------------------------------#
@@ -125,12 +117,11 @@ def read_inference_data(config:dict=None) -> dict:
         static_data["id"] = static_data["id"].astype("category")
         static_data = static_data.set_index("id")
         
-        # map is better than join in term of memory
-        for name in config["input_static_features"]:
-            inference_data[name] = inference_data['id'].map(
-                static_data[name]).astype("float32")
+    else:
+        static_data = None
         
-    return {'inference_data':inference_data}
+    return {'inference_timeseries_data':inference_data,
+            'inference_static_data':static_data}
 
 
 #-----------------------------------------------------------------------------#
@@ -143,17 +134,77 @@ def read_scale_inference_data(config, scaler):
     return {'inference_data_scaled':scaler.transform(x=inference_data)}
 
 
-def get_scaler_name(config):
+def get_scaler_name(config, timeseries = True):
     
-    scaler_name = config["scaler_input_timeseries_features"]*len(
-        config['input_timeseries_features']) + \
-    config["scaler_target_features"]* len(config["target_features"])
+    if timeseries:
+        col_scaler = dict(
+            zip(
+                config["input_timeseries_features"] + 
+                config["target_features"],
+
+                len(config["input_timeseries_features"]) *
+                config["scaler_input_timeseries_features"] + 
+                
+                len(config["target_features"])*
+                config["scaler_target_features"]
+                
+                )
+            )
+    else:
+        col_scaler = dict(
+            zip(
+                config["input_static_features"],
+                len(config["input_static_features"]) *
+                config["scaler_input_static_features"]
+                )
+            )
     
-    if "input_static_features" in config.keys():
-        scaler_name +=  config["scaler_input_static_features"]*len(
-            config["input_static_features"])
+    return col_scaler
     
-    return scaler_name
+#-----------------------------------------------------------------------------#
+#          Combine static and dynmiac method for the model                    #
+#-----------------------------------------------------------------------------#
+def combine_timeseries_static(timeseries_data:pd.DataFrame, 
+                              static_data:pd.DataFrame,
+                              model,
+                              keep_target_features = False):
     
+    if keep_target_features: 
+        col_names = (['id', 'time'] + model.input_features)
+    else:
+        col_names = (['id', 'time'] + model.input_timeseries_features)
+    
+    # Select and resort column order
+    combined_data = timeseries_data[col_names].copy()
+    
+    # Now join time series and static data together
+    for name in model.input_static_features:
+        
+        combined_data[name] = combined_data['id'].map(
+            static_data[name]).astype("float32")
+    
+    return(combined_data)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+       
+    
+
+
+
+
+
+
+
+
+
     
     

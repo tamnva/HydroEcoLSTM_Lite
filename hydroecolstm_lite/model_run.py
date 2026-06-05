@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from hydroecolstm_lite.data.read_data import get_scaler_name, read_train_valid_test_data
+from hydroecolstm_lite.data.read_data import read_train_valid_test_data
+from hydroecolstm_lite.data.read_data import get_scaler_name
 from hydroecolstm_lite.data.scaler import Scaler
 from hydroecolstm_lite.model.create_model import create_model
 from hydroecolstm_lite.train.trainer import Trainer
@@ -10,28 +11,37 @@ def run_config(config):
 
     data = read_train_valid_test_data(config)
     
-    # Scale/transformer name for static, timeseries, and target features
-    scaler_names = get_scaler_name(config)
+    # Transform timeseries and static attributes
+    col_scaler_timeseries = get_scaler_name(config, True)
+    col_scaler_static = get_scaler_name(config, False)
     
-    # Scaler/transformer
-    scaler = Scaler()
-    scaler.fit(data=data['train_data'], scaler_names=scaler_names)
+    scaler = {}
+    data_scaled = {}
     
-    data['train_data_scaled'] = scaler.transform(data['train_data'])
-    del data['train_data'] 
-    
-    data['valid_data_scaled'] = scaler.transform(data['valid_data'])
-    del data['valid_data'] 
-    
-    data['test_data_scaled'] = scaler.transform(data['test_data'])
-    del data['test_data']  
+    for key in data.keys():
+        
+        scaler[key] = Scaler()
+        
+        if 'timeseries' in key:
+            scaler[key].fit(data[key], col_scaler_timeseries)
+        else:
+            scaler[key].fit(data[key], col_scaler_static)
+            
+        data_scaled[key] = scaler[key].transform(data[key])
+        
+    del data[key]
     
     model = create_model(config)
         
     trainer = Trainer(config, model)
     
-    model = trainer.train(data['train_data_scaled'], data['valid_data_scaled'])
+    model = trainer.train(
+        data_scaled['timeseries_data_train'],
+        data_scaled['timeseries_data_valid'],
+        data_scaled['static_data']
+        )
         
     loss_epoch = trainer.loss_epoch
         
-    return data, model, loss_epoch, scaler
+    return data_scaled, scaler, model, loss_epoch
+
