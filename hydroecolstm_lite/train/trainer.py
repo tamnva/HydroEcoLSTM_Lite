@@ -2,6 +2,7 @@ import torch
 import copy
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
@@ -42,15 +43,6 @@ class Trainer():
         # Select and resort column order
         timeseries_data_train = timeseries_data_train[col_names]
         timeseries_data_valid = timeseries_data_valid[col_names]
-        
-        # Now join time series and static data together
-#        timeseries_data_train = combine_timeseries_static(
-#            timeseries_data_train, static_data, self.model
-#            )
-        
-#        timeseries_data_valid = combine_timeseries_static(
-#            timeseries_data_valid, static_data, self.model
-#            )
         
         # Create custom dataset
         xy_train = CustomDataset(timeseries_data_train, static_data, 
@@ -137,6 +129,10 @@ class Trainer():
             if epoch == 0:
                 best_loss = np.average(valid_loss_batch)
                 self.best_state_dict = copy.deepcopy(self.model.state_dict())
+                torch.save(self.model.state_dict(), 
+                           Path(self.out_dir, "best_model_state_dict.pt"))
+                print(f"Saved best model state dict at epoch {epoch+1}")
+
             else:
                 if np.average(valid_loss_batch) < best_loss:
                     patience = 0
@@ -144,6 +140,9 @@ class Trainer():
                     self.best_state_dict = copy.deepcopy(
                         self.model.state_dict()
                         )
+                    torch.save(self.model.state_dict(), 
+                               Path(self.out_dir, "best_model_state_dict.pt"))
+                    print(f"Saved best model state dict at epoch {epoch+1}")
 
             if patience > self.patience:
                 print("Early stopping")
