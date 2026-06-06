@@ -1,25 +1,39 @@
 import torch
 import pandas as pd
 from torch.utils.data import Dataset
+from hydroecolstm_lite.data.read_data import combine_timeseries_static
                          
 class CustomDataset(Dataset):
-    def __init__(self, 
-                 data:pd.DataFrame, 
-                 input_features:str, 
-                 target_features:str,
+    def __init__(self,
+                 timeseries_data:pd.DataFrame, 
+                 static_data:pd.DataFrame, 
+                 model, 
                  warmup_length:int,
                  sequence_length:int):
         
-        self.X = torch.tensor(data[input_features].values, 
-                              dtype=torch.float32)
-        
-        self.Y = torch.tensor(data[target_features].values,
-                              dtype=torch.float32)
-        
         # Don't use observed values in warm up period
-        idx = data.reset_index().index[
-            data.groupby('id', observed=True).cumcount() < warmup_length
+        idx = timeseries_data.reset_index().index[
+            timeseries_data.groupby('id', observed=True).cumcount() < warmup_length
             ]
+        
+        self.Y = torch.tensor(timeseries_data[model.target_features].values,
+                              dtype=torch.float32)
+        
+        repeats = torch.tensor(
+            timeseries_data['id'].value_counts(sort=False).values)
+        
+        static_data = torch.tensor(
+            static_data[model.input_static_features].values,
+            dtype=torch.float32)
+        
+        static_data = torch.repeat_interleave(static_data, repeats, dim=0)
+
+        timeseries_data = torch.tensor(
+            timeseries_data[model.input_timeseries_features].values,
+            dtype=torch.float32
+            )
+        
+        self.X = torch.cat([timeseries_data, static_data], dim=1)
         
         self.Y[idx,:] = torch.nan
         

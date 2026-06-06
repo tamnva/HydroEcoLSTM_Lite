@@ -5,7 +5,6 @@ import pandas as pd
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
-from hydroecolstm_lite.data.read_data import combine_timeseries_static
 
 # LSTM + Linears
 class Trainer():
@@ -45,24 +44,21 @@ class Trainer():
         timeseries_data_valid = timeseries_data_valid[col_names]
         
         # Now join time series and static data together
-        timeseries_data_train = combine_timeseries_static(
-            timeseries_data_train, static_data, self.model
-            )
+#        timeseries_data_train = combine_timeseries_static(
+#            timeseries_data_train, static_data, self.model
+#            )
         
-        timeseries_data_valid = combine_timeseries_static(
-            timeseries_data_valid, static_data, self.model
-            )
+#        timeseries_data_valid = combine_timeseries_static(
+#            timeseries_data_valid, static_data, self.model
+#            )
         
-        # Optimization function
-        optim = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-                
         # Create custom dataset
-        xy_train = CustomDataset(timeseries_data_train, self.input_features, 
-                                 self.target_features, self.warmup_length,
+        xy_train = CustomDataset(timeseries_data_train, static_data, 
+                                 self.model, self.warmup_length,
                                  self.sequence_length)
         
-        xy_valid = CustomDataset(timeseries_data_valid, self.input_features, 
-                                 self.target_features, self.warmup_length,
+        xy_valid = CustomDataset(timeseries_data_valid, static_data, 
+                                 self.model, self.warmup_length,
                                  self.sequence_length)
         
         print("Number of iteration per epoch = ", 
@@ -75,6 +71,8 @@ class Trainer():
         patience = 0
         
         # Train the model
+        optim = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        
         for epoch in range(self.n_epochs):
             
             patience += 1
