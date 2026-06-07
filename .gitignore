@@ -155,3 +155,5 @@ cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks
 *.zip
+/examples/2_camels_de
+/examples/1_streamflow_simulation

@@ -8,7 +8,7 @@ static_data_file: &static_file
 
 # ouptut directory, model output will be save in this file
 output_directory:
-  - C:/Users/nguyenta/Downloads/results
+  - C:/Users/nguyenta/Downloads
 
 # input static features - column name(s) of the static_data_file
 input_static_features:
@@ -87,10 +87,10 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 200
+n_epochs: 100
 
 # Learning rate
-learning_rate: 0.005
+learning_rate: 0.001
 
 # Dropout rate (applied to output of each LSTM layers)
 dropout: 0
@@ -108,7 +108,7 @@ sequence_length: 365
 batch_size: 8
 
 # Patience length
-patience: 10
+patience: 30
 
 # (optional input) function to evaluate the selected model: NSE, RMSE, MAE, MSE
 eval_function: NSE

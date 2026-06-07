@@ -82,7 +82,7 @@ class Trainer():
             
             # Loop over batches
             for x_batch, y_batch in xy_train_batch:
-                  
+                
                 # Get model output
                 y_predict = self.model(x_batch)
 
@@ -91,12 +91,17 @@ class Trainer():
                 
                 # Loss value    
                 loss = self.loss_function(y_batch, y_predict)
-                 
-                # Backward prop
-                loss.backward()
+                
+                if not torch.isnan(loss):
                     
-                # Update weights and biases
-                optim.step()
+                    # Backward prop
+                    loss.backward()
+                    
+                    # Update weights and biases
+                    optim.step()
+                    
+                else:
+                    print("Loss is nan, skip this batch")
                 
                 # Save traning loss 
                 train_loss_batch.append(loss.item())

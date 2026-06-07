@@ -30,6 +30,11 @@ with torch.inference_mode():
 data_scaled['timeseries_data_train']["simulated"] = simulated.flatten().numpy()
 
 # Get NSE test period for each basins
-(data_scaled['timeseries_data_train'].groupby("id", observed=True).apply(
+nse_val = (data_scaled['timeseries_data_train'].groupby("id", observed=True).apply(
     lambda g: nse(g["simulated"], g["discharge_vol_m3_s"], 60),
     include_groups=False).rename("nse").reset_index())
+
+nse_val["nse"].mean()
+
+
+
