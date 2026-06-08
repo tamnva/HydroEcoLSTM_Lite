@@ -51,5 +51,13 @@ def read_config(config_file):
             config["inference_period"],
             format = "%Y-%m-%d %H:%M"
             )
-
+        config["id_inference"] = [str(ids) for ids in config["id_inference"]]
+        
+    # To string
+    config["id_train"] = [str(ids) for ids in config["id_train"]]
+    config["id_test"] = [str(ids) for ids in config["id_test"]]
+    config["id_valid"] = [str(ids) for ids in config["id_valid"]]
+    
+    
+    
     return config

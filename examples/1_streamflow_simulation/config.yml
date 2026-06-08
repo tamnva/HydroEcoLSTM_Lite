@@ -29,7 +29,7 @@ target_features:
 
 # selected catchments (object_id) used for traning/validation/test the model
 id_train: &ids
-  - 2009
+  - a2009
   - 2016
   - 2018
   - 2019
@@ -87,7 +87,7 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 100
+n_epochs: 1
 
 # Learning rate
 learning_rate: 0.001
@@ -99,7 +99,7 @@ dropout: 0
 warmup_length: 30
 
 # Loss function: RMSE, MSE, MAE, NSE_complement
-loss_function: MSE
+loss_function: NSE_complement
 
 # Sequence length
 sequence_length: 365
@@ -108,7 +108,7 @@ sequence_length: 365
 batch_size: 8
 
 # Patience length
-patience: 30
+patience: 1
 
 # (optional input) function to evaluate the selected model: NSE, RMSE, MAE, MSE
 eval_function: NSE

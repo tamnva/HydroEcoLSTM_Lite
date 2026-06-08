@@ -38,3 +38,6 @@ nse_val["nse"].mean()
 
 
 
+
+static_data = data_scaled["static_data"].copy()
+timeseries_data = data_scaled["timeseries_data_train"].copy()

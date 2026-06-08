@@ -17,7 +17,8 @@ def read_train_valid_test_data(config:dict=None) -> dict:
         config["timeseries_data_file"][0],
         usecols=require_columns,
         parse_dates=["time"],
-        date_format="%Y-%m-%d %H:%M"
+        date_format="%Y-%m-%d %H:%M",
+        dtype={"id": str}
         )
     
     float_cols = timeseries_data.select_dtypes(include="float").columns 
@@ -51,6 +52,7 @@ def read_train_valid_test_data(config:dict=None) -> dict:
         static_data = pd.read_csv(
             config["static_data_file"][0],
             usecols=require_columns,
+            dtype={"id": str}
         )
 
         float_cols = static_data.select_dtypes(include="float").columns
@@ -61,7 +63,6 @@ def read_train_valid_test_data(config:dict=None) -> dict:
     else:
         static_data = None
 
-        
     return {'timeseries_data_train':data_train,
             'timeseries_data_valid':data_valid, 
             'timeseries_data_test':data_test,
@@ -84,7 +85,8 @@ def read_inference_data(config:dict=None) -> dict:
         config['timeseries_data_file_inference'][0],
         usecols=require_columns,
         parse_dates=["time"],
-        date_format="%Y-%m-%d %H:%M"
+        date_format="%Y-%m-%d %H:%M",
+        dtype={"id": str}
         )
     
     float_cols = timeseries_data.select_dtypes(include="float").columns 
@@ -109,6 +111,7 @@ def read_inference_data(config:dict=None) -> dict:
         static_data = pd.read_csv(
             config['static_data_file'][0],
             usecols=require_columns,
+            dtype={"id": str}
         )
 
         float_cols = static_data.select_dtypes(include="float").columns
