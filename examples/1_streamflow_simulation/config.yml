@@ -99,7 +99,7 @@ dropout: 0
 warmup_length: 30
 
 # Loss function: RMSE, MSE, MAE, NSE_complement
-loss_function: NSE_complement
+loss_function: MSE
 
 # Sequence length
 sequence_length: 365

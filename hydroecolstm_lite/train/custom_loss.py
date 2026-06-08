@@ -8,23 +8,21 @@ class CustomLoss(nn.Module):
         # Dict of all available loss functions
         loss_functions = {"MSE": self.MSE, 
                           "RMSE": self.RMSE,
-                          "RMSE_normalize": self.RMSE_normalize,
                           "MAE": self.MAE,
                           "NSE_complement": self.NSE_complement}
         
         # Use this loss function
         self.loss_function = loss_functions[loss_function]
-        self.skip = skip
     
     def forward(self, y_true:torch.Tensor, y_predict:torch.Tensor) -> torch.Tensor:
                 
-        mask = ~torch.isnan(y_true[:,self.skip:,:])
-        loss = self.loss_function(y_true[:,self.skip:,:], 
-                                  y_predict[:,self.skip:,:], 
-                                  mask)
+        mask = ~torch.isnan(y_true)
+        loss = self.loss_function(y_true, y_predict, mask)
         
         if torch.isnan(loss).any():
-            raise ValueError("loss is nan, cannot train the model, check training data")
+            raise ValueError(
+                "loss is nan, cannot train the model, check training data"
+                )
 
         return loss
     
@@ -56,15 +54,6 @@ class CustomLoss(nn.Module):
         rmse = self.MSE(y_true, y_predict, mask)**0.5
         
         return rmse
-
-    def RMSE_normalize(self, y_true:torch.Tensor, y_predict:torch.Tensor,
-            mask:torch.Tensor)-> torch.Tensor: 
-        
-        # Root Mean Square Error
-        rmse_normalize = self.MSE(y_true, y_predict, mask)**0.5/ torch.mean(
-            y_true[mask])
-        
-        return rmse_normalize
     
     # Complement to 1 of the Nash-Sutcliffe (or 1- Nash sutcliffe)
     def NSE_complement(self, y_true:torch.Tensor, y_predict:torch.Tensor,
