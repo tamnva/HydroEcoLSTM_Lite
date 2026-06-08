@@ -15,7 +15,7 @@ data_scaled, scaler, model, trainer = run_config(config)
 
 # Combine time series and statics
 test_data_scaled = combine_timeseries_static(
-    data_scaled['timeseries_data_train'], data_scaled['static_data'], model)
+    data_scaled['timeseries_data_test'], data_scaled['static_data'], model)
 
 # Convert to model input
 test_data_scaled = torch.tensor(test_data_scaled[model.input_features].values,
@@ -27,17 +27,14 @@ with torch.inference_mode():
     simulated = model(test_data_scaled)
     
 # Add results to data frame
-data_scaled['timeseries_data_train']["simulated"] = simulated.flatten().numpy()
+data_scaled['timeseries_data_test']["simulated"] = simulated.flatten().numpy()
 
 # Get NSE test period for each basins
-nse_val = (data_scaled['timeseries_data_train'].groupby("id", observed=True).apply(
+nse_val = (data_scaled['timeseries_data_test'].groupby("id", observed=True).apply(
     lambda g: nse(g["simulated"], g["discharge_vol_m3_s"], 60),
     include_groups=False).rename("nse").reset_index())
 
 nse_val["nse"].mean()
-
-
-
 
 static_data = data_scaled["static_data"].copy()
 timeseries_data = data_scaled["timeseries_data_train"].copy()

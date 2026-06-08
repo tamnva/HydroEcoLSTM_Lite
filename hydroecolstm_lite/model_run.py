@@ -16,18 +16,21 @@ def run_config(config):
     col_scaler_static = get_scaler_name(config, False)
     
     scaler = {}
+    
+    scaler["timeseries_data"] = Scaler()
+    scaler["timeseries_data"].fit(data["timeseries_data_train"], 
+                                  col_scaler_timeseries)
+            
+    scaler["static_data"] = Scaler()
+    scaler["static_data"].fit(data["static_data"], col_scaler_static)
+    
     data_scaled = {}
     
     for key in data.keys():
-        
-        scaler[key] = Scaler()
-        
-        if 'timeseries' in key:
-            scaler[key].fit(data[key], col_scaler_timeseries)
+        if 'timeseries_data' in key:
+            data_scaled[key] = scaler["timeseries_data"].transform(data[key])
         else:
-            scaler[key].fit(data[key], col_scaler_static)
-            
-        data_scaled[key] = scaler[key].transform(data[key])
+            data_scaled[key] = scaler["static_data"].transform(data[key])
         
     del data[key]
     
