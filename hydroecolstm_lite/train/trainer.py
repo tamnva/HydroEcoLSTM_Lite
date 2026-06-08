@@ -63,9 +63,13 @@ class Trainer():
         patience = 0
         
         # Train the model
-        optim = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        optim = torch.optim.Adam(self.model.parameters(), lr=self.lr[0])
         
         for epoch in range(self.n_epochs):
+            
+            for param_group in optim.param_groups:
+                param_group["lr"] = (self.lr[0] + (self.lr[1] - self.lr[0])*
+                                     epoch/(self.n_epochs -1))
             
             patience += 1
             
@@ -109,6 +113,11 @@ class Trainer():
             # Set model to eval mode (in this mode, dropout = 0, no normlization)
             self.model.eval()
 
+            # Save model state dict
+            torch.save(self.model.state_dict(), 
+                       Path(self.out_dir, "epoch_" + 
+                            str(epoch) + "_state_dict.pt"))
+            
             # Loop over batches
             with torch.inference_mode():
                 for x_batch, y_batch in xy_valid_batch:
@@ -122,7 +131,6 @@ class Trainer():
                     # Save traning loss 
                     valid_loss_batch.append(loss.item())
             
-
             # Store average loss per epoch for training and validation
             train_loss_epoch.append(np.average(train_loss_batch))
             valid_loss_epoch.append(np.average(valid_loss_batch))

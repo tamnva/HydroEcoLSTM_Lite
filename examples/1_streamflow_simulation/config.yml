@@ -87,10 +87,12 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 1
+n_epochs: 100
 
 # Learning rate
-learning_rate: 0.001
+learning_rate: 
+  - 0.001      # learning rate at epoch 1
+  - 0.00001    # learning rate at n_epochs
 
 # Dropout rate (applied to output of each LSTM layers)
 dropout: 0
@@ -108,7 +110,7 @@ sequence_length: 365
 batch_size: 8
 
 # Patience length
-patience: 10
+patience: 100
 
 # (optional input) function to evaluate the selected model: NSE, RMSE, MAE, MSE
 eval_function: NSE

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import torch
+from pathlib import Path
 from hydroecolstm_lite.data.read_data import read_train_valid_test_data
 from hydroecolstm_lite.data.read_data import get_scaler_name
 from hydroecolstm_lite.data.scaler import Scaler
@@ -35,7 +37,12 @@ def run_config(config):
     del data[key]
     
     model = create_model(config)
-        
+
+    if "init_model_state_dict" in config.keys(): 
+        state_dict_file = Path(config["init_model_state_dict"][0])
+        if state_dict_file.exists(): 
+            model.load_state_dict(torch.load(state_dict_file))
+    
     trainer = Trainer(config, model)
     
     model = trainer.train(
