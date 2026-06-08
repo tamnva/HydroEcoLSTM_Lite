@@ -45,7 +45,6 @@ class CustomDataset(Dataset):
             )
         
         self.X = torch.cat([timeseries_data, static_data_order], dim=1)
-        
         self.warmup_length = warmup_length
         self.sequence_length = sequence_length
         

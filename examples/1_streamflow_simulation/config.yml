@@ -108,7 +108,7 @@ sequence_length: 365
 batch_size: 8
 
 # Patience length
-patience: 1
+patience: 10
 
 # (optional input) function to evaluate the selected model: NSE, RMSE, MAE, MSE
 eval_function: NSE

@@ -63,7 +63,7 @@ class CustomLoss(nn.Module):
         sse = torch.sum((y_true[mask] - y_predict[mask])**2)
         
         # Sum of Square Difference around mean
-        ssd = torch.sum((y_true[mask] - torch.mean(y_predict[mask]))**2)
+        ssd = torch.sum((y_true[mask] - torch.mean(y_true[mask]))**2)
         
         # Minimize loss, so output should be sse/ssd, which is 1 - NSE
         return sse/ssd
