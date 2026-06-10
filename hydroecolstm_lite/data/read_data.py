@@ -72,7 +72,7 @@ def read_train_valid_test_data(config:dict=None) -> dict:
 #-----------------------------------------------------------------------------#
 #                         Read train test valid data                          #
 #-----------------------------------------------------------------------------#
-def read_inference_data(config:dict=None) -> dict:
+def read_inference_data(config:dict=None, keep_target_features=True) -> dict:
     
     # The column names must contains the following names
     require_columns = [
@@ -80,6 +80,9 @@ def read_inference_data(config:dict=None) -> dict:
         'time',
         *config['input_timeseries_features']
         ]
+    
+    if keep_target_features:
+        require_columns += config['target_features']
     
     timeseries_data = pd.read_csv(
         config['timeseries_data_file_inference'][0],
@@ -134,9 +137,12 @@ def read_scale_inference_data(config, scaler):
     
     inference_data = read_inference_data(config)
     
-    return {'inference_data_scaled':scaler.transform(x=inference_data)}
+    return {'inference_data_scaled':scaler.transform(inference_data)}
 
 
+#-----------------------------------------------------------------------------#
+#                         Read scale inference data                           #
+#-----------------------------------------------------------------------------#
 def get_scaler_name(config, timeseries = True):
     
     if timeseries:
