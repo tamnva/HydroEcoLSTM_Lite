@@ -100,8 +100,8 @@ def read_inference_data(config:dict=None, keep_target_features=True) -> dict:
     
     inference_data = timeseries_data[require_columns][
         timeseries_data["id"].isin(config["id_train"]) & 
-        (timeseries_data["time"] >= config["test_period"][0]) & 
-        (timeseries_data["time"] <= config["test_period"][1])
+        (timeseries_data["time"] >= config["inference_period"][0]) & 
+        (timeseries_data["time"] <= config["inference_period"][1])
         ]
     
     del timeseries_data
