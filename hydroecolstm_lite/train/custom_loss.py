@@ -18,11 +18,6 @@ class CustomLoss(nn.Module):
                 
         mask = ~torch.isnan(y_true)
         loss = self.loss_function(y_true, y_predict, mask)
-        
-        if torch.isnan(loss).any():
-            raise ValueError(
-                "loss is nan, cannot train the model, check training data"
-                )
 
         return loss
     

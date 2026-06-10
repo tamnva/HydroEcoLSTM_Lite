@@ -45,23 +45,5 @@ nse_val = (data_scaled['timeseries_data_test'].
 nse_val.mean()
 
 
-
-
-static_data = data_scaled["static_data"].copy()
-timeseries_data = data_scaled["timeseries_data_train"].copy()
-warmup_length = config["warmup_length"]
-
-
-
-learning_rate = [0.001, 0.00001]
-n_epochs = 500
-
-for epoch in range(n_epochs): 
-    lrate = (learning_rate[0] + (learning_rate[1] - learning_rate[0])* 
-             epoch/(n_epochs -1))
-    
-    print(f"Epoch = {epoch}, lrate = {lrate}")
-    
-    
     
     

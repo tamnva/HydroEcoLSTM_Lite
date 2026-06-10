@@ -87,7 +87,7 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 100
+n_epochs: 400
 
 # Learning rate
 learning_rate: 
@@ -110,7 +110,7 @@ sequence_length: 365
 batch_size: 8
 
 # Patience length
-patience: 100
+patience: 400
 
 # (optional input) function to evaluate the selected model: NSE, RMSE, MAE, MSE
 eval_function: NSE
