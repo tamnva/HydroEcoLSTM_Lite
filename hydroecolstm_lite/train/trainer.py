@@ -132,29 +132,46 @@ class Trainer():
                     valid_loss_batch.append(loss.item())
             
             # Store average loss per epoch for training and validation
-            train_loss_epoch.append(np.average(train_loss_batch))
-            valid_loss_epoch.append(np.average(valid_loss_batch))
+            train_loss = np.nanmean(train_loss_batch)
+            valid_loss = np.nanmean(valid_loss_batch)
+            
+            # Add to result
+            train_loss_epoch.append(valid_loss)
+            valid_loss_epoch.append(valid_loss)
             
             print(f"Epoch [{epoch+1}/{self.n_epochs}]:", 
-                  f"train_loss = {train_loss_epoch[-1]:.8f},",
-                  f"valid_loss = {valid_loss_epoch[-1]:.8f}")
+                  f"train_loss = {train_loss:.8f},",
+                  f"valid_loss = {valid_loss:.8f}")
+            
             
             if epoch == 0:
-                best_loss = np.average(valid_loss_batch)
+                
+                if np.isnan(valid_loss):
+                    best_loss = float('inf')
+                else:
+                    best_loss = valid_loss
+                    
                 self.best_state_dict = copy.deepcopy(self.model.state_dict())
+                
                 torch.save(self.model.state_dict(), 
                            Path(self.out_dir, "best_model_state_dict.pt"))
+                
                 print(f"Saved best model state dict at epoch {epoch+1}")
 
             else:
-                if np.average(valid_loss_batch) < best_loss:
+                
+                if not np.isnan(valid_loss) and valid_loss < best_loss:
+                    
                     patience = 0
-                    best_loss = np.average(valid_loss_batch)
+                    best_loss = np.nanmean(valid_loss_batch)
+                    
                     self.best_state_dict = copy.deepcopy(
                         self.model.state_dict()
                         )
+                    
                     torch.save(self.model.state_dict(), 
                                Path(self.out_dir, "best_model_state_dict.pt"))
+                    
                     print(f"Saved best model state dict at epoch {epoch+1}")
 
             if patience > self.patience:
@@ -163,7 +180,7 @@ class Trainer():
         
         
         self.model.load_state_dict(self.best_state_dict)
-        print(f"Model with the lowest validation loss was selected: {best_loss:.8f}")
+        print(f"Load state dict of model with best loss: {best_loss:.8f}")
             
         self.loss_epoch = pd.DataFrame({
             'train_loss': train_loss_epoch,
