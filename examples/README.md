@@ -2,7 +2,7 @@
 
 - "camels_de" and camels-ch folder 
   -  "static_attributes.csv": static catchment attributes from CAMELS-DE (Dolich et al., 2025; Loritz et al., 2025) and CAMELS-CH (Höge et al., 2023; do Nascimento et al., 2025)
-  - "time_series.csv": daily streamflow from CAMELS-DE and meterological data from DWD (hyras_de v6.1). In the case of camels-ch, all daily time series data were taken from camels-ch
+  - "time_series.csv": daily streamflow from CAMELS-DE and meterological data from DWD (hyras_de v6.1). In the case of camels-ch, all daily time series data were taken from camels-ch.  [Link to camels-de processed data is here](https://drive.google.com/file/d/1FaKa5CSTpHvAVvDPPsj68-i-eoqWK69Z/view?usp=sharing) 
 - main.py
   - The python script to run this example with the config.yml file
 

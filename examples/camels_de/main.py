@@ -5,9 +5,11 @@ from hydroecolstm_lite.data.read_config import read_config
 from hydroecolstm_lite.data.read_data import combine_timeseries_static
 from hydroecolstm_lite.data.read_data import read_scale_inference_data
 from hydroecolstm_lite.model.create_model import create_model
+from hydroecolstm_lite.model_run import run_config
+from hydroecolstm_lite.utility.evaluation_function import nse
 
 # Read configuration file, please modify the path to the config.yml file
-lstm_data_dir = "paste_lstm_data_dir_here"
+lstm_data_dir = "C:/HydroEcoLSTM_Lite/examples/camels_de"
 
 # Read and update config file
 config = read_config(Path(lstm_data_dir, "config.yml"))
@@ -17,62 +19,10 @@ config["timeseries_data_file_inference"] = config["timeseries_data_file"]
 config["static_data_file_inference"] = config["static_data_file"]
 config["output_directory"][0] = Path(lstm_data_dir)
 
-#-----------------------------------------------------------------------------#
-#                              Inference data                                 #
-#-----------------------------------------------------------------------------#
-# Load scaler
-scaler = torch.load(Path(lstm_data_dir, "scaler.pt"), 
-                    weights_only=False)
-
-# Create model 
-model = create_model(config)
-
-# Load state dict
-state_dict = torch.load(
-    Path(lstm_data_dir, "best_model_state_dict.pt"), 
-    weights_only=False)
-
-model.load_state_dict(state_dict)
-
-# Read and scale inference data
-inference_data = read_scale_inference_data(config, scaler)
-
-inference_data = combine_timeseries_static(
-    inference_data["inference_timeseries_data"], 
-    inference_data["inference_static_data"], 
-    model)
-
-simulated = inference_data[["id", "time"]].copy()
-simulated["discharge_spec_obs"] = np.nan
-
-inference_data = torch.tensor(
-    inference_data[model.input_features].values,
-    dtype=torch.float32
-    )
-
-inference_data = torch.split(
-    inference_data, 
-    int(inference_data.shape[0]/len(config["id_inference"])), 
-    dim=0
-    )    
-    
-model.eval()
-with torch.inference_mode():
-    for ids, chunk in zip(simulated["id"].unique().tolist(), inference_data):
-        mask = simulated["id"] == ids 
-        simulated.loc[mask, "discharge_spec_obs"] = (
-            model(chunk).squeeze().detach().numpy())
-
-scaler["timeseries_data"].inverse(simulated).to_csv(
-    Path(lstm_data_dir, "de_sim_discharge_update.csv"), 
-    index=False)
-
+# Note: see link in readme file to download processed camles-de data
 #-----------------------------------------------------------------------------#
 #             The code within this section is used for training               #
 #-----------------------------------------------------------------------------#
-from hydroecolstm_lite.model_run import run_config
-from hydroecolstm_lite.utility.evaluation_function import nse
-
 # Just train for scratch, don't use initial state dict
 del config["init_model_state_dict"]
 
@@ -126,3 +76,54 @@ nse_val["nse"].median()
 scaler["timeseries_data"].inverse(simulated).to_csv(
     Path(lstm_data_dir, "test_data.csv"), index=False
     )
+
+#-----------------------------------------------------------------------------#
+#                              Inference data                                 #
+#-----------------------------------------------------------------------------#
+# Load scaler
+scaler = torch.load(Path(lstm_data_dir, "scaler.pt"), 
+                    weights_only=False)
+
+# Create model 
+model = create_model(config)
+
+# Load state dict
+state_dict = torch.load(
+    Path(lstm_data_dir, "best_model_state_dict.pt"), 
+    weights_only=False)
+
+model.load_state_dict(state_dict)
+
+# Read and scale inference data
+inference_data = read_scale_inference_data(config, scaler)
+
+inference_data = combine_timeseries_static(
+    inference_data["inference_timeseries_data"], 
+    inference_data["inference_static_data"], 
+    model)
+
+simulated = inference_data[["id", "time"]].copy()
+simulated["discharge_spec_obs"] = np.nan
+
+inference_data = torch.tensor(
+    inference_data[model.input_features].values,
+    dtype=torch.float32
+    )
+
+inference_data = torch.split(
+    inference_data, 
+    int(inference_data.shape[0]/len(config["id_inference"])), 
+    dim=0
+    )    
+    
+model.eval()
+with torch.inference_mode():
+    for ids, chunk in zip(simulated["id"].unique().tolist(), inference_data):
+        mask = simulated["id"] == ids 
+        simulated.loc[mask, "discharge_spec_obs"] = (
+            model(chunk).squeeze().detach().numpy())
+
+scaler["timeseries_data"].inverse(simulated).to_csv(
+    Path(lstm_data_dir, "de_sim_discharge_update.csv"), 
+    index=False)
+
