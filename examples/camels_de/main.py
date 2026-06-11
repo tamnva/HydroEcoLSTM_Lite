@@ -9,7 +9,7 @@ from hydroecolstm_lite.model_run import run_config
 from hydroecolstm_lite.utility.evaluation_function import nse
 
 # Read configuration file, please modify the path to the config.yml file
-lstm_data_dir = "C:/HydroEcoLSTM_Lite/examples/camels_de"
+lstm_data_dir = "C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_de"
 
 # Read and update config file
 config = read_config(Path(lstm_data_dir, "config.yml"))

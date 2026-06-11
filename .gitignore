@@ -157,3 +157,4 @@ cython_debug/
 *.zip
 /examples/2_camels_de
 /examples/1_streamflow_simulation
+examples/camels_de/time_series.csv

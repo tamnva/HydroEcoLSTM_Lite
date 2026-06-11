@@ -197,7 +197,7 @@ patience: 50
 
 # start and ending of the inference period, must be in yyyy-mm-dd hh:mm format
 inference_period: 
-  - 2024-01-01 00:00
+  - 2019-01-01 00:00
   - 2100-12-31 00:00
 
 # Catchment id for training
