@@ -133,11 +133,23 @@ def read_inference_data(config:dict=None, keep_target_features=True) -> dict:
 #-----------------------------------------------------------------------------#
 #                         Read scale inference data                           #
 #-----------------------------------------------------------------------------#
-def read_scale_inference_data(config, scaler):
+def read_scale_inference_data(config, scaler, keep_target_features=True):
     
     inference_data = read_inference_data(config)
     
-    return {'inference_data_scaled':scaler.transform(inference_data)}
+    inference_data["inference_timeseries_data"] = (
+        scaler["timeseries_data"].transform(
+            inference_data["inference_timeseries_data"]
+            )
+        )
+    
+    inference_data["inference_static_data"] = (
+        scaler["static_data"].transform(
+            inference_data["inference_static_data"]
+            )
+        )
+    
+    return inference_data
 
 
 #-----------------------------------------------------------------------------#

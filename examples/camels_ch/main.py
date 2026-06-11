@@ -9,7 +9,7 @@ from hydroecolstm_lite.utility.evaluation_function import nse
 #-----------------------------------------------------------------------------#
 
 # Read configuration file, please modify the path to the config.yml file
-config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/1_streamflow_simulation/config.yml")
+config = read_config("C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_ch/config.yml")
 
 data_scaled, scaler, model, trainer = run_config(config)
 
@@ -20,17 +20,13 @@ test_data_scaled = combine_timeseries_static(
 
 # Run inference with test data
 model.eval()
+simulated = torch.empty(0, len(config["target_features"]))
 
 with torch.inference_mode():
     for ids in test_data_scaled["id"].unique(): 
-        # Loop over basin 
         input_data = test_data_scaled[test_data_scaled["id"] == ids]
         input_data = torch.tensor(input_data[model.input_features].values)
-        
-        if ids == test_data_scaled["id"].unique()[0]:
-            simulated = model(input_data)
-        else:
-            simulated = torch.cat((simulated, model(input_data)), dim = 0)
+        simulated = torch.cat((simulated, model(input_data)), dim = 0)
     
 # Add results to data frame
 data_scaled['timeseries_data_test']["simulated"] = simulated.flatten().numpy()
@@ -40,7 +36,7 @@ nse_val = (data_scaled['timeseries_data_test'].
            groupby("id", observed=True).
            apply(lambda g: nse(g["simulated"], 
                                g["discharge_vol_m3_s"], 
-                               60),
+                               config["warmup_length"]),
                  include_groups=False))
 nse_val.mean()
 
