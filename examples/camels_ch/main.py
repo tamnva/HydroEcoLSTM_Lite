@@ -33,7 +33,6 @@ data_scaled, scaler, model, trainer = run_config(config)
 test_data_scaled = combine_timeseries_static(
     data_scaled['timeseries_data_test'], data_scaled['static_data'], model)
 
-
 # Run inference with test data
 model.eval()
 simulated = torch.empty(0, len(config["target_features"]))
