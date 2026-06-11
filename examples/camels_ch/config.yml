@@ -1,14 +1,14 @@
 # path to time series data file, input and target features should be in this file
 timeseries_data_file: &timeseries_file
-  - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_ch/time_series.csv
+  - will_be_updated_inside the main.py file or update here
 
 # (optional input) path to catchment attributes file
 static_data_file: &static_file
-  - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_ch/static_attributes.csv
+  - will_be_updated_inside the main.py file or update here
 
 # ouptut directory, model output will be save in this file
 output_directory:
-  - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_ch
+  - will_be_updated_inside the main.py file or update here
 
 # input static features - column name(s) of the static_data_file
 input_static_features:
