@@ -24,11 +24,12 @@ conda activate hydroecolstm_lite
 # 2. Install the lastest version from github
 pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/master.zip
 
-# 3. Run the example in this HydroEcoLSTM/examples/1_streamflow_simulation
-#    "main.py":     python file for running this example
-#    'config.yml'   configuration file (please adjust it)
-#    'data'         contains the time series and statics inputs to run the model
-#                   in the time_series.csv must have two columns "id" and "time"
-#                   in the static_attributes.csv must have column "id"
+# 3. Run the example in this HydroEcoLSTM/examples/camels_de or HydroEcoLSTM/examples/camels_ch
+#    "main.py":         python file for running this example
+#    'config.yml'       configuration file (please adjust it)
+#    'time_series.csv'  contains the time series and statics inputs to run the model
+#                          in the time_series.csv must have two columns "id" and "time"
+#                          in the static_attributes.csv must have column "id"
+#    Please read the README.md within this folder regarding the orginal data sources and license
 ```
 
