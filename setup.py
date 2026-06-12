@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from pathlib import Path
 
 # Read the description
@@ -8,33 +8,32 @@ with readme_file.open("r") as fp:
     
 setup(
     name='hydroecolstm_lite',
-    version='0.1',    
-    description='A python package for HydroEcological Modelling using LSTM',
+    version='0.1.0',
+    description='A Python package for hydro-ecological modelling using LSTM',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/tamnva/HydroEcoLSTM_Lite.git',
     author='Tam V. Nguyen',
     author_email='tamnva@gmail.com',
-    packages=['hydroecolstm_lite', 
-              'hydroecolstm_lite.data',
-              'hydroecolstm_lite.utility', 
-              'hydroecolstm_lite.model',
-              'hydroecolstm_lite.train'],
-    python_requires='>=3.12',
-    install_requires=['pandas',
-                      'numpy',
-                      'torch',
-                      'PyYAML',
-                      'pathlib'
-                      ],
+    packages=find_packages(exclude=("tests", "examples")),
+    python_requires='>=3.8',
+    install_requires=[
+        'pandas>=1.0',
+        'numpy>=1.20',
+        'torch',
+        'PyYAML',
+    ],
 
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',  
-        'Operating System :: POSIX :: Linux',        
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
     ],
 
     include_package_data=False,
+    license='GPLv3',
+    keywords=['hydrology', 'ecology', 'lstm', 'deep-learning', 'time-series'],
 )

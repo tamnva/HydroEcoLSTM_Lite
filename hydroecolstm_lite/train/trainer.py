@@ -1,5 +1,4 @@
 import torch
-import copy
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -146,7 +145,7 @@ class Trainer():
             valid_loss = np.nanmean(valid_loss_batch)
             
             # Add to result
-            train_loss_epoch.append(valid_loss)
+            train_loss_epoch.append(train_loss)
             valid_loss_epoch.append(valid_loss)
             
             print(f"Epoch [{epoch+1}/{self.n_epochs}]:", 
@@ -161,10 +160,9 @@ class Trainer():
                 else:
                     best_loss = valid_loss
                     
-                self.best_state_dict = copy.deepcopy(self.model.state_dict())
-                
-                torch.save(self.model.state_dict(), 
-                           Path(self.out_dir, "best_model_state_dict.pt"))
+                # Save best state dict as CPU tensors for portability
+                self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
+                torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
                 
                 print(f"Saved best model state dict at epoch {epoch+1}")
 
@@ -175,12 +173,9 @@ class Trainer():
                     patience = 0
                     best_loss = np.nanmean(valid_loss_batch)
                     
-                    self.best_state_dict = copy.deepcopy(
-                        self.model.state_dict()
-                        )
-                    
-                    torch.save(self.model.state_dict(), 
-                               Path(self.out_dir, "best_model_state_dict.pt"))
+                    # Save best state dict as CPU tensors for portability
+                    self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
+                    torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
                     
                     print(f"Saved best model state dict at epoch {epoch+1}")
 

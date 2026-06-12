@@ -1,6 +1,5 @@
-__version__ = "0.1"
+__version__ = "0.1.0"
 __author__ = 'Tam V. Nguyen'
 __credits__ = 'Helmholtz Centre for Environmental Research (UFZ)'
-
-from .import data, model, utility, train
+from . import data, model, utility, train
 __all__ = ["data", "model", "utility", "train"]

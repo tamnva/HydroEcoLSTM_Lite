@@ -60,7 +60,3 @@ nse_val = (data_scaled['timeseries_data_test'].
                                config["warmup_length"]),
                  include_groups=False))
 nse_val.mean()
-
-
-    
-    

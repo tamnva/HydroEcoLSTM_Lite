@@ -17,7 +17,6 @@ def read_train_valid_test_data(config:dict=None) -> dict:
         config["timeseries_data_file"][0],
         usecols=require_columns,
         parse_dates=["time"],
-        date_format="%Y-%m-%d %H:%M",
         dtype={"id": str}
         )
     
@@ -33,7 +32,7 @@ def read_train_valid_test_data(config:dict=None) -> dict:
                                      config["train_period"][1])]
     
     data_valid = timeseries_data[
-        timeseries_data["id"].isin(config["id_train"]) &
+        timeseries_data["id"].isin(config["id_valid"]) &
         timeseries_data["time"].between(config["valid_period"][0], 
                                      config["valid_period"][1])]
     
@@ -88,7 +87,6 @@ def read_inference_data(config:dict=None, keep_target_features=True) -> dict:
         config['timeseries_data_file_inference'][0],
         usecols=require_columns,
         parse_dates=["time"],
-        date_format="%Y-%m-%d %H:%M",
         dtype={"id": str}
         )
     
@@ -98,11 +96,13 @@ def read_inference_data(config:dict=None, keep_target_features=True) -> dict:
     # To save memory later
     timeseries_data["id"] = timeseries_data["id"].astype("category")
     
-    inference_data = timeseries_data[require_columns][
-        timeseries_data["id"].isin(config["id_train"]) & 
+    mask = (
+        timeseries_data["id"].isin(config["id_inference"]) & 
         (timeseries_data["time"] >= config["inference_period"][0]) & 
         (timeseries_data["time"] <= config["inference_period"][1])
-        ]
+    )
+    
+    inference_data = timeseries_data.loc[mask, require_columns]
     
     del timeseries_data
     
