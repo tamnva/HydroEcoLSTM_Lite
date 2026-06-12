@@ -41,7 +41,9 @@ def run_config(config):
     if "init_model_state_dict" in config.keys(): 
         state_dict_file = Path(config["init_model_state_dict"][0])
         if state_dict_file.exists(): 
-            model.load_state_dict(torch.load(state_dict_file))
+            # Load state dict to CPU first for compatibility
+            state = torch.load(state_dict_file, map_location='cpu')
+            model.load_state_dict(state)
     
     trainer = Trainer(config, model)
     

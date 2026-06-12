@@ -5,6 +5,7 @@ from hydroecolstm_lite.data.read_config import read_config
 from hydroecolstm_lite.data.read_data import combine_timeseries_static
 from hydroecolstm_lite.data.read_data import read_scale_inference_data
 from hydroecolstm_lite.model.create_model import create_model
+from hydroecolstm_lite.utility.get_device import get_device
 from hydroecolstm_lite.model_run import run_config
 from hydroecolstm_lite.utility.evaluation_function import nse
 
@@ -88,11 +89,12 @@ scaler = torch.load(Path(lstm_data_dir, "scaler.pt"),
 model = create_model(config)
 
 # Load state dict
-state_dict = torch.load(
-    Path(lstm_data_dir, "best_model_state_dict.pt"), 
-    weights_only=False)
+device = get_device(config)
 
+# Load state dict (map to CPU first then move model to device)
+state_dict = torch.load(Path(lstm_data_dir, "best_model_state_dict.pt"), map_location='cpu')
 model.load_state_dict(state_dict)
+model = model.to(device)
 
 # Read and scale inference data
 inference_data = read_scale_inference_data(config, scaler)
@@ -120,8 +122,8 @@ model.eval()
 with torch.inference_mode():
     for ids, chunk in zip(simulated["id"].unique().tolist(), inference_data):
         mask = simulated["id"] == ids 
-        simulated.loc[mask, "discharge_spec_obs"] = (
-            model(chunk).squeeze().detach().numpy())
+        out = model(chunk.to(device)).squeeze().detach().cpu().numpy()
+        simulated.loc[mask, "discharge_spec_obs"] = out
 
 scaler["timeseries_data"].inverse(simulated).to_csv(
     Path(lstm_data_dir, "de_sim_discharge_update.csv"), 

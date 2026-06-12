@@ -10,6 +10,9 @@ static_data_file: &static_file
 output_directory:
   - will_be_updated_inside the main.py file or update here
 
+# Device to use for training: 'cpu', 'cuda'/'gpu', or 'auto' to pick GPU if available
+device: auto
+
 # input static features - column name(s) of the static_data_file
 input_static_features:
   - elev_mean
@@ -93,7 +96,7 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 400
+n_epochs: 2
 
 # Learning rate
 learning_rate: 

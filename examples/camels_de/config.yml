@@ -16,6 +16,9 @@ static_data_file_inference: *static_file
 output_directory:
   - will_be_updated_inside the main.py file or update here
 
+# Device to use for training: 'cpu', 'cuda'/'gpu', or 'auto' to pick GPU if available
+device: auto
+
 # Input catchment attributes
 input_static_features:
   - p_mean

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
+from hydroecolstm_lite.utility.get_device import get_device
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
 
@@ -28,6 +29,8 @@ class Trainer():
         self.input_timeseries_features = model.input_timeseries_features
         self.input_static_features = model.input_static_features
         self.input_features = model.input_features
+        self.device = get_device(config)
+        self.model = self.model.to(self.device)
         
     # Train function
     def train(self, 
@@ -86,7 +89,10 @@ class Trainer():
             
             # Loop over batches
             for x_batch, y_batch in xy_train_batch:
-                
+                # Move batch to device
+                x_batch = x_batch.to(self.device)
+                y_batch = y_batch.to(self.device)
+
                 # Get model output
                 y_predict = self.model(x_batch)
 
@@ -114,17 +120,21 @@ class Trainer():
             self.model.eval()
 
             # Save model state dict
-            torch.save(self.model.state_dict(), 
-                       Path(self.out_dir, "epoch_" + 
-                            str(epoch) + "_state_dict.pt"))
+            # Save a CPU copy of the state dict for portability
+            cpu_state = {k: v.cpu() for k, v in self.model.state_dict().items()}
+            torch.save(cpu_state, 
+                       Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt"))
             
             # Loop over batches
             with torch.inference_mode():
                 for x_batch, y_batch in xy_valid_batch:
-                    
+                    # Move batch to device
+                    x_batch = x_batch.to(self.device)
+                    y_batch = y_batch.to(self.device)
+
                     # Forward pass:
                     y_predict = self.model(x_batch)
-                    
+
                     # Get Loss
                     loss = self.loss_function(y_batch, y_predict)
                     

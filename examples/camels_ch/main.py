@@ -4,6 +4,7 @@ from hydroecolstm_lite.model_run import run_config
 from hydroecolstm_lite.data.read_config import read_config
 from hydroecolstm_lite.data.read_data import combine_timeseries_static
 from hydroecolstm_lite.utility.evaluation_function import nse
+from hydroecolstm_lite.utility.get_device import get_device
 
 #-----------------------------------------------------------------------------#
 #                        Set up, train, test model                            #
@@ -38,10 +39,15 @@ model.eval()
 simulated = torch.empty(0, len(config["target_features"]))
 
 with torch.inference_mode():
+    # Use same device selection as training
+    device = get_device(config)
+    model = model.to(device)
+
     for ids in test_data_scaled["id"].unique(): 
         input_data = test_data_scaled[test_data_scaled["id"] == ids]
-        input_data = torch.tensor(input_data[model.input_features].values)
-        simulated = torch.cat((simulated, model(input_data)), dim = 0)
+        input_data = torch.tensor(input_data[model.input_features].values, dtype=torch.float32)
+        out = model(input_data.to(device)).detach().cpu()
+        simulated = torch.cat((simulated, out), dim = 0)
     
 # Add results to data frame
 data_scaled['timeseries_data_test']["simulated"] = simulated.flatten().numpy()
