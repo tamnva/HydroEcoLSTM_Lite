@@ -2,7 +2,7 @@
 
 
 - HydroEcoLSTM_Lite is a Lite version of the HydroEcoLSTM package.
-- Model performance for > 1500 CAMELS-DE catchment for test period (2011-2020) median NSE = 0.853 
+- Model performance for > 1500 CAMELS-DE catchment for test period (2011-2020) median NSE = 0.860 
 - TODO: Train on GPU (currently only train on CPU is possible)
 
 
