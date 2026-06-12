@@ -6,6 +6,7 @@ from hydroecolstm_lite.data.read_data import combine_timeseries_static
 from hydroecolstm_lite.data.read_data import read_scale_inference_data
 from hydroecolstm_lite.model.create_model import create_model
 from hydroecolstm_lite.utility.get_device import get_device
+from hydroecolstm_lite.utility.logger import get_logger
 from hydroecolstm_lite.model_run import run_config
 from hydroecolstm_lite.utility.evaluation_function import nse
 
@@ -19,6 +20,9 @@ config["static_data_file"][0] = Path(lstm_data_dir, "static_attributes.csv")
 config["timeseries_data_file_inference"] = config["timeseries_data_file"]
 config["static_data_file_inference"] = config["static_data_file"]
 config["output_directory"][0] = Path(lstm_data_dir)
+
+# configure logger early so examples write logs to output directory
+logger = get_logger(config)
 
 # Note: see link in readme file to download processed camles-de data
 #-----------------------------------------------------------------------------#
@@ -56,7 +60,7 @@ test_data = torch.split(
 model.eval()
 with torch.inference_mode():
     for ids, chunk in zip(simulated["id"].unique().tolist(), test_data):
-        print(ids)
+        logger.info("Running inference for id %s", ids)
         mask = simulated["id"] == ids 
         simulated.loc[mask, "discharge_spec_obs"] = (
             model(chunk).squeeze().detach().numpy())
@@ -82,8 +86,7 @@ scaler["timeseries_data"].inverse(simulated).to_csv(
 #                              Inference data                                 #
 #-----------------------------------------------------------------------------#
 # Load scaler
-scaler = torch.load(Path(lstm_data_dir, "scaler.pt"), 
-                    weights_only=False)
+scaler = torch.load(Path(lstm_data_dir, "scaler.pt"))
 
 # Create model 
 model = create_model(config)

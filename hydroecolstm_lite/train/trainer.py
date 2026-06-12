@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.utility.get_device import get_device
+from hydroecolstm_lite.utility.logger import get_logger
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
 
@@ -30,6 +31,8 @@ class Trainer():
         self.input_features = model.input_features
         self.device = get_device(config)
         self.model = self.model.to(self.device)
+        # configure logger
+        self.logger = get_logger(config)
         
     # Train function
     def train(self, 
@@ -54,9 +57,8 @@ class Trainer():
         xy_valid = CustomDataset(timeseries_data_valid, static_data, 
                                  self.model, self.warmup_length,
                                  self.sequence_length)
-        
-        print("Number of iteration per epoch = ", 
-              int(xy_train.__len__()/self.batch_size))
+        self.logger.info("Number of iteration per epoch = %d", 
+                 int(xy_train.__len__()/self.batch_size))
         
         # Train and valid loss per epoch
         train_loss_epoch = []
@@ -76,8 +78,17 @@ class Trainer():
             patience += 1
             
             # Create batch data for each epoch
-            xy_train_batch = DataLoader(xy_train, self.batch_size, shuffle=True)
-            xy_valid_batch = DataLoader(xy_valid, self.batch_size, shuffle=True)
+            xy_train_batch = DataLoader(
+                xy_train, 
+                self.batch_size, 
+                shuffle=True
+                )
+            
+            xy_valid_batch = DataLoader(
+                xy_valid, 
+                self.batch_size, 
+                shuffle=True
+                )
             
             # Create list to store train and valid loss per batch
             train_loss_batch = []
@@ -110,7 +121,7 @@ class Trainer():
                     optim.step()
                     
                 else:
-                    print("Loss is nan, skip this batch")
+                    self.logger.warning("Loss is nan, skip this batch")
                 
                 # Save traning loss 
                 train_loss_batch.append(loss.item())
@@ -120,9 +131,13 @@ class Trainer():
 
             # Save model state dict
             # Save a CPU copy of the state dict for portability
-            cpu_state = {k: v.cpu() for k, v in self.model.state_dict().items()}
-            torch.save(cpu_state, 
-                       Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt"))
+            cpu_state = {k: v.cpu() for k, v in 
+                         self.model.state_dict().items()}
+            
+            torch.save(
+                cpu_state, 
+                Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt")
+                )
             
             # Loop over batches
             with torch.inference_mode():
@@ -148,9 +163,10 @@ class Trainer():
             train_loss_epoch.append(train_loss)
             valid_loss_epoch.append(valid_loss)
             
-            print(f"Epoch [{epoch+1}/{self.n_epochs}]:", 
-                  f"train_loss = {train_loss:.8f},",
-                  f"valid_loss = {valid_loss:.8f}")
+            self.logger.info(
+                "Epoch [%d/%d]: train_loss = %.8f, valid_loss = %.8f",
+                epoch+1, self.n_epochs, train_loss, valid_loss
+                )
             
             
             if epoch == 0:
@@ -161,10 +177,19 @@ class Trainer():
                     best_loss = valid_loss
                     
                 # Save best state dict as CPU tensors for portability
-                self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
-                torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+                self.best_state_dict = {k: v.cpu() for k, v in 
+                                        self.model.state_dict().items()}
                 
-                print(f"Saved best model state dict at epoch {epoch+1}")
+                torch.save(
+                    self.best_state_dict,
+                    Path(self.out_dir, "best_model_state_dict.pt")
+                    )
+                
+                
+                self.logger.info(
+                    "Saved best model state dict at epoch %d", 
+                    epoch+1
+                    )
 
             else:
                 
@@ -174,18 +199,22 @@ class Trainer():
                     best_loss = np.nanmean(valid_loss_batch)
                     
                     # Save best state dict as CPU tensors for portability
-                    self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
-                    torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+                    self.best_state_dict = {k: v.cpu() for k, v in 
+                                            self.model.state_dict().items()}
+                    torch.save(self.best_state_dict, 
+                               Path(self.out_dir, "best_model_state_dict.pt"))
                     
-                    print(f"Saved best model state dict at epoch {epoch+1}")
+                    self.logger.info("Saved best model state dict at epoch %d", 
+                                     epoch+1)
 
             if patience > self.patience:
-                print("Early stopping")
+                self.logger.info("Early stopping")
                 break
         
         
         self.model.load_state_dict(self.best_state_dict)
-        print(f"Load state dict of model with best loss: {best_loss:.8f}")
+        self.logger.info("Load state dict of model with best loss: %.8f", 
+                         best_loss)
             
         self.loss_epoch = pd.DataFrame({
             'train_loss': train_loss_epoch,
