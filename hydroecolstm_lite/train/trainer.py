@@ -68,12 +68,12 @@ class Trainer():
         
         # Train the model
         optim = torch.optim.Adam(self.model.parameters(), lr=self.lr[0])
+        learning_rate = np.linspace(self.lr[0], self.lr[1], self.n_epochs) 
         
         for epoch in range(self.n_epochs):
             
             for param_group in optim.param_groups:
-                param_group["lr"] = (self.lr[0] + (self.lr[1] - self.lr[0])*
-                                     epoch/(self.n_epochs -1))
+                param_group["lr"] = learning_rate[epoch]
             
             patience += 1
             
@@ -219,6 +219,7 @@ class Trainer():
         state_to_load = {k: v.to(self.device) for k, v in
                  self.best_state_dict.items()}
         self.model.load_state_dict(state_to_load)
+        
         # ensure model is on device (no-op if already there)
         self.model = self.model.to(self.device)
         self.logger.info("Load state dict of model with best loss: %.8f", 
