@@ -64,7 +64,7 @@ test_period:
 # or leave it like this if and the model will state random 
 # initial state dicts if file does not exist
 init_model_state_dict:
-  - E:/Tam/camels-de-model/results/non_exist_file.pt
+  - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_ch/best_model_state_dict.pt
   
 # Model head: currently only regression model (multi-layer neural network was implemented)
 Regression:

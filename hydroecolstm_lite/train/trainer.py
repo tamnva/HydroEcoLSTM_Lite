@@ -212,9 +212,17 @@ class Trainer():
                 break
         
         
-        self.model.load_state_dict(self.best_state_dict)
+        # Move state dict tensors to the trainer device before loading.
+        # The saved best_state_dict uses CPU tensors for portability, so
+        # explicitly map them to the model device to avoid any device
+        # mismatch surprises at runtime.
+        state_to_load = {k: v.to(self.device) for k, v in
+                 self.best_state_dict.items()}
+        self.model.load_state_dict(state_to_load)
+        # ensure model is on device (no-op if already there)
+        self.model = self.model.to(self.device)
         self.logger.info("Load state dict of model with best loss: %.8f", 
-                         best_loss)
+                 best_loss)
             
         self.loss_epoch = pd.DataFrame({
             'train_loss': train_loss_epoch,

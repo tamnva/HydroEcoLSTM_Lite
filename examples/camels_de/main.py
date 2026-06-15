@@ -59,11 +59,14 @@ test_data = torch.split(
 # Now forward pass to get simulated streamflow (scaled data)
 model.eval()
 with torch.inference_mode():
+    # ensure model and inputs are on the same device to avoid device mismatch
+    device = get_device(config)
+    model = model.to(device)
     for ids, chunk in zip(simulated["id"].unique().tolist(), test_data):
         logger.info("Running inference for id %s", ids)
-        mask = simulated["id"] == ids 
-        simulated.loc[mask, "discharge_spec_obs"] = (
-            model(chunk).squeeze().detach().numpy())
+        mask = simulated["id"] == ids
+        out = model(chunk.to(device)).squeeze().detach().cpu().numpy()
+        simulated.loc[mask, "discharge_spec_obs"] = out
 
 # Get NSE test period for each basins
 data_scaled['timeseries_data_test']["simulated"] = (
