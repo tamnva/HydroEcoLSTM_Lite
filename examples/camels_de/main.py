@@ -76,7 +76,8 @@ data_scaled['timeseries_data_test']["simulated"] = (
 nse_val = (data_scaled['timeseries_data_test'].
  groupby("id", observed=True).
  apply(lambda g: nse(g["simulated"], g["discharge_spec_obs"], 
-                     config["warmup_length"]), include_groups=False).
+                     config["warmup_length"]), 
+                     include_groups=False).
  rename("nse").reset_index())
 nse_val["nse"].median()
 
