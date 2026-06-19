@@ -22,8 +22,8 @@ Installation with Anaconda using environment file following the steps listed bel
 conda env create -f environment.yml
 conda activate flowstats_env
 
-# 2. Or you can install in your exising environment
-pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/master.zip
+# 2. Or you can install in your existing environment
+pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/development.zip
 
 # 3. Run the example in this HydroEcoLSTM/examples/camels_de or HydroEcoLSTM/examples/camels_ch
 #    "main.py":         python file for running this example
