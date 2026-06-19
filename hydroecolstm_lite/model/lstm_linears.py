@@ -42,6 +42,10 @@ class Lstm_Linears(nn.Module):
         # Columns of output tensor will be this order
         self.target_features = config["target_features"]
         
+        # Trainable scaler layer
+        self.shift = nn.Parameter(torch.zeros(len(self.input_features)))
+        self.scale = nn.Parameter(torch.ones(len(self.input_features)))
+
         # Standard LSTM from torch input = [batch, sequence, features]
         self.lstm = nn.LSTM(input_size=len(self.input_features), 
                             hidden_size=self.hidden_size, 
@@ -70,6 +74,11 @@ class Lstm_Linears(nn.Module):
             Predicted sequence with the same time dimension as the input.
         """
 
+        x = (x - self.shift)/(torch.maximum(torch.abs(self.scale), 
+                                            torch.tensor(1e-3)
+                                            )
+                              )
+        
         y_predict, _ = self.lstm(x)
 
         return self.linear(y_predict)
