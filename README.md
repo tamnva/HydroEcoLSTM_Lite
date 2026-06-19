@@ -34,24 +34,6 @@ pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/maste
 #    Please read the README.md within this folder regarding the orginal data sources and license
 ```
 
-### Programmatic Usage
-
-You can run training programmatically from a YAML config file. See `examples/camels_ch/main.py` for a complete example.
-
-```python
-from pathlib import Path
-from hydroecolstm_lite.data.read_config import read_config
-from hydroecolstm_lite.model_run import run_config
-
-config = read_config(Path("examples/camels_ch/config.yml"))
-# update paths in the config to point to your data files
-config["timeseries_data_file"][0] = Path("examples/camels_ch/time_series.csv")
-config["static_data_file"][0] = Path("examples/camels_ch/static_attributes.csv")
-config["output_directory"][0] = Path("examples/camels_ch")
-
-# run training
-data_scaled, scaler, model, trainer = run_config(config)
-```
 
 ### Documentation
 
