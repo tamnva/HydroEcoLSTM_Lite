@@ -3,7 +3,7 @@
 
 - HydroEcoLSTM_Lite is a Lite version of the HydroEcoLSTM package.
 - Model performance for > 1500 CAMELS-DE catchment for test period (2011-2020) median NSE = 0.860
-- Training option: on CPU or GPU
+- Training option: on CPU or GPU 
 
 
 
@@ -22,7 +22,7 @@ Installation with Anaconda using environment file following the steps listed bel
 conda env create -f environment.yml
 conda activate flowstats_env
 
-# 2. Or you can install in your exising environment
+# 2. Or you can install in your existing environment
 pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/master.zip
 
 # 3. Run the example in this HydroEcoLSTM/examples/camels_de or HydroEcoLSTM/examples/camels_ch
@@ -33,4 +33,14 @@ pip install https://github.com/tamnva/HydroEcoLSTM_Lite/archive/refs/heads/maste
 #                          in the static_attributes.csv must have column "id"
 #    Please read the README.md within this folder regarding the orginal data sources and license
 ```
+
+
+### Documentation
+
+This repository includes two documentation scaffolds:
+
+- MkDocs (recommended for lightweight site and API with `mkdocstrings`): see `mkdocs.yml` and content in `docs/`.
+- Sphinx (classic Python docs + autodoc): see `docs_sphinx/`.
+
+Build instructions are available in `docs/usage.md` and `docs_sphinx/usage.rst`.
 

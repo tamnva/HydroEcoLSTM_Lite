@@ -8,8 +8,27 @@ from hydroecolstm_lite.utility.logger import get_logger
 from hydroecolstm_lite.train.custom_loss import CustomLoss
 from hydroecolstm_lite.data.custom_dataset import CustomDataset
 
+
+"""Training utilities.
+
+This module provides the `Trainer` class which encapsulates the training
+loop, model checkpointing and early stopping used by the package.
+"""
+
+
 # LSTM + Linears
 class Trainer():
+    """Trainer orchestrates model training and validation.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary containing training hyperparameters and
+        output directories.
+    model : torch.nn.Module
+        Model instance to be trained.
+    """
+
     def __init__(self, config, model):
 
         # Training parameters
@@ -23,8 +42,8 @@ class Trainer():
         self.loss_epoch = None
         self.best_state_dict = None
         self.best_train_loss = None
-        self.warmup_length = config['warmup_length']
-        self.sequence_length = config['sequence_length']
+        self.warmup_length = config["warmup_length"]
+        self.sequence_length = config["sequence_length"]
         self.target_features = model.target_features
         self.input_timeseries_features = model.input_timeseries_features
         self.input_static_features = model.input_static_features
@@ -33,70 +52,68 @@ class Trainer():
         self.model = self.model.to(self.device)
         # configure logger
         self.logger = get_logger(config)
-        
+
     # Train function
-    def train(self, 
-              timeseries_data_train:pd.DataFrame,
-              timeseries_data_valid:pd.DataFrame,
-              static_data:pd.DataFrame):
-        
+    def train(self, timeseries_data_train: pd.DataFrame, timeseries_data_valid: pd.DataFrame, static_data: pd.DataFrame):
+        """Run the training loop and perform validation each epoch.
+
+        Parameters
+        ----------
+        timeseries_data_train : pandas.DataFrame
+            Timeseries training data.
+        timeseries_data_valid : pandas.DataFrame
+            Timeseries validation data.
+        static_data : pandas.DataFrame
+            Static attributes used by the model.
+
+        Returns
+        -------
+        torch.nn.Module
+            The trained model (with best weights loaded).
+        """
+
         # Make sure column names order as in the model
-        col_names = (['id', 'time'] + 
-                     self.input_timeseries_features + 
-                     self.target_features)
+        col_names = (["id", "time"] + self.input_timeseries_features + self.target_features)
 
         # Select and resort column order
         timeseries_data_train = timeseries_data_train[col_names]
         timeseries_data_valid = timeseries_data_valid[col_names]
-        
+
         # Create custom dataset
-        xy_train = CustomDataset(timeseries_data_train, static_data, 
-                                 self.model, self.warmup_length,
-                                 self.sequence_length)
-        
-        xy_valid = CustomDataset(timeseries_data_valid, static_data, 
-                                 self.model, self.warmup_length,
-                                 self.sequence_length)
-        self.logger.info("Number of iteration per epoch = %d", 
-                 int(xy_train.__len__()/self.batch_size))
-        
+        xy_train = CustomDataset(timeseries_data_train, static_data, self.model, self.warmup_length, self.sequence_length)
+
+        xy_valid = CustomDataset(timeseries_data_valid, static_data, self.model, self.warmup_length, self.sequence_length)
+        self.logger.info("Number of iteration per epoch = %d", int(xy_train.__len__() / self.batch_size))
+
         # Train and valid loss per epoch
         train_loss_epoch = []
         valid_loss_epoch = []
-        
+
         patience = 0
-        
+
         # Train the model
         optim = torch.optim.Adam(self.model.parameters(), lr=self.lr[0])
-        learning_rate = np.linspace(self.lr[0], self.lr[1], self.n_epochs) 
-        
+        learning_rate = np.linspace(self.lr[0], self.lr[1], self.n_epochs)
+
         for epoch in range(self.n_epochs):
-            
+
             for param_group in optim.param_groups:
                 param_group["lr"] = learning_rate[epoch]
-            
+
             patience += 1
-            
+
             # Create batch data for each epoch
-            xy_train_batch = DataLoader(
-                xy_train, 
-                self.batch_size, 
-                shuffle=True
-                )
-            
-            xy_valid_batch = DataLoader(
-                xy_valid, 
-                self.batch_size, 
-                shuffle=True
-                )
-            
+            xy_train_batch = DataLoader(xy_train, self.batch_size, shuffle=True)
+
+            xy_valid_batch = DataLoader(xy_valid, self.batch_size, shuffle=True)
+
             # Create list to store train and valid loss per batch
             train_loss_batch = []
             valid_loss_batch = []
-            
+
             # Set model to train mode
             self.model.train()
-            
+
             # Loop over batches
             for x_batch, y_batch in xy_train_batch:
                 # Move batch to device
@@ -108,37 +125,33 @@ class Trainer():
 
                 # Reset the gradients to zero
                 optim.zero_grad()
-                
-                # Loss value    
+
+                # Loss value
                 loss = self.loss_function(y_batch, y_predict)
-                
+
                 if not torch.isnan(loss):
-                    
+
                     # Backward prop
                     loss.backward()
-                    
+
                     # Update weights and biases
                     optim.step()
-                    
+
                 else:
                     self.logger.warning("Loss is nan, skip this batch")
-                
-                # Save traning loss 
+
+                # Save traning loss
                 train_loss_batch.append(loss.item())
-                
+
             # Set model to eval mode (in this mode, dropout = 0, no normlization)
             self.model.eval()
 
             # Save model state dict
             # Save a CPU copy of the state dict for portability
-            cpu_state = {k: v.cpu() for k, v in 
-                         self.model.state_dict().items()}
-            
-            torch.save(
-                cpu_state, 
-                Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt")
-                )
-            
+            cpu_state = {k: v.cpu() for k, v in self.model.state_dict().items()}
+
+            torch.save(cpu_state, Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt"))
+
             # Loop over batches
             with torch.inference_mode():
                 for x_batch, y_batch in xy_valid_batch:
@@ -151,82 +164,68 @@ class Trainer():
 
                     # Get Loss
                     loss = self.loss_function(y_batch, y_predict)
-                    
-                    # Save traning loss 
+
+                    # Save traning loss
                     valid_loss_batch.append(loss.item())
-            
+
             # Store average loss per epoch for training and validation
             train_loss = np.nanmean(train_loss_batch)
             valid_loss = np.nanmean(valid_loss_batch)
-            
+
             # Add to result
             train_loss_epoch.append(train_loss)
             valid_loss_epoch.append(valid_loss)
-            
+
             self.logger.info(
                 "Epoch [%d/%d]: train_loss = %.8f, valid_loss = %.8f",
-                epoch+1, self.n_epochs, train_loss, valid_loss
-                )
-            
-            
+                epoch + 1,
+                self.n_epochs,
+                train_loss,
+                valid_loss,
+            )
+
             if epoch == 0:
-                
+
                 if np.isnan(valid_loss):
-                    best_loss = float('inf')
+                    best_loss = float("inf")
                 else:
                     best_loss = valid_loss
-                    
+
                 # Save best state dict as CPU tensors for portability
-                self.best_state_dict = {k: v.cpu() for k, v in 
-                                        self.model.state_dict().items()}
-                
-                torch.save(
-                    self.best_state_dict,
-                    Path(self.out_dir, "best_model_state_dict.pt")
-                    )
-                
-                
-                self.logger.info(
-                    "Saved best model state dict at epoch %d", 
-                    epoch+1
-                    )
+                self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
+
+                torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+
+                self.logger.info("Saved best model state dict at epoch %d", epoch + 1)
 
             else:
-                
+
                 if not np.isnan(valid_loss) and valid_loss < best_loss:
-                    
+
                     patience = 0
                     best_loss = np.nanmean(valid_loss_batch)
-                    
+
                     # Save best state dict as CPU tensors for portability
-                    self.best_state_dict = {k: v.cpu() for k, v in 
-                                            self.model.state_dict().items()}
-                    torch.save(self.best_state_dict, 
-                               Path(self.out_dir, "best_model_state_dict.pt"))
-                    
-                    self.logger.info("Saved best model state dict at epoch %d", 
-                                     epoch+1)
+                    self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
+                    torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+
+                    self.logger.info("Saved best model state dict at epoch %d", epoch + 1)
 
             if patience > self.patience:
                 self.logger.info("Early stopping")
                 break
-        
-        
+
         # Move state dict tensors to the trainer device before loading.
         # The saved best_state_dict uses CPU tensors for portability, so
         # explicitly map them to the model device to avoid any device
         # mismatch surprises at runtime.
-        state_to_load = {k: v.to(self.device) for k, v in
-                 self.best_state_dict.items()}
+        state_to_load = {k: v.to(self.device) for k, v in self.best_state_dict.items()}
         self.model.load_state_dict(state_to_load)
-        
+
         # ensure model is on device (no-op if already there)
         self.model = self.model.to(self.device)
-        self.logger.info("Load state dict of model with best loss: %.8f", 
-                 best_loss)
-            
-        self.loss_epoch = pd.DataFrame({
-            'train_loss': train_loss_epoch,
-            'valid_loss': valid_loss_epoch})
+        self.logger.info("Load state dict of model with best loss: %.8f", best_loss)
+
+        self.loss_epoch = pd.DataFrame({"train_loss": train_loss_epoch, "valid_loss": valid_loss_epoch})
 
         return self.model

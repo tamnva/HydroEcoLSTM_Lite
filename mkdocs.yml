@@ -1,0 +1,15 @@
+site_name: HydroEcoLSTM-Lite
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - API: api.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.insert(0, '.')
+theme:
+  name: material

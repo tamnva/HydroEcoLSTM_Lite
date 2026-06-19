@@ -1,0 +1,35 @@
+name: Build Sphinx Docs
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-sphinx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Sphinx deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f docs_sphinx/requirements-sphinx.txt ]; then pip install -r docs_sphinx/requirements-sphinx.txt; fi
+
+      - name: Build Sphinx HTML
+        run: |
+          sphinx-build -b html docs_sphinx build/sphinx_html
+
+      - name: Upload Sphinx HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sphinx-site
+          path: build/sphinx_html

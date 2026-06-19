@@ -96,7 +96,7 @@ hidden_size: 30
 num_layers: 1
 
 # Number of training epoch
-n_epochs: 2
+n_epochs: 200
 
 # Learning rate
 learning_rate: 
@@ -116,7 +116,7 @@ loss_function: NSE_complement
 sequence_length: 365
 
 # Batch size
-batch_size: 8
+batch_size: 10
 
 # Patience length
 patience: 400
