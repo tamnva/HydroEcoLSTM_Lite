@@ -54,7 +54,10 @@ class Trainer():
         self.logger = get_logger(config)
 
     # Train function
-    def train(self, timeseries_data_train: pd.DataFrame, timeseries_data_valid: pd.DataFrame, static_data: pd.DataFrame):
+    def train(self, timeseries_data_train: pd.DataFrame, 
+              timeseries_data_valid: pd.DataFrame, 
+              static_data: pd.DataFrame):
+        
         """Run the training loop and perform validation each epoch.
 
         Parameters
@@ -73,17 +76,29 @@ class Trainer():
         """
 
         # Make sure column names order as in the model
-        col_names = (["id", "time"] + self.input_timeseries_features + self.target_features)
+        col_names = (["id", "time"] + 
+                     self.input_timeseries_features + 
+                     self.target_features)
 
         # Select and resort column order
         timeseries_data_train = timeseries_data_train[col_names]
         timeseries_data_valid = timeseries_data_valid[col_names]
 
         # Create custom dataset
-        xy_train = CustomDataset(timeseries_data_train, static_data, self.model, self.warmup_length, self.sequence_length)
+        xy_train = CustomDataset(timeseries_data_train, 
+                                 static_data, 
+                                 self.model, 
+                                 self.warmup_length, 
+                                 self.sequence_length)
 
-        xy_valid = CustomDataset(timeseries_data_valid, static_data, self.model, self.warmup_length, self.sequence_length)
-        self.logger.info("Number of iteration per epoch = %d", int(xy_train.__len__() / self.batch_size))
+        xy_valid = CustomDataset(timeseries_data_valid, 
+                                 static_data, 
+                                 self.model, 
+                                 self.warmup_length, 
+                                 self.sequence_length)
+        
+        self.logger.info("Number of iteration per epoch = %d", 
+                         int(xy_train.__len__() / self.batch_size))
 
         # Train and valid loss per epoch
         train_loss_epoch = []
@@ -148,9 +163,11 @@ class Trainer():
 
             # Save model state dict
             # Save a CPU copy of the state dict for portability
-            cpu_state = {k: v.cpu() for k, v in self.model.state_dict().items()}
+            cpu_state = {k: v.cpu() for k, v in 
+                         self.model.state_dict().items()}
 
-            torch.save(cpu_state, Path(self.out_dir, "epoch_" + str(epoch) + "_state_dict.pt"))
+            torch.save(cpu_state, Path(self.out_dir, "epoch_" + 
+                                       str(epoch) + "_state_dict.pt"))
 
             # Loop over batches
             with torch.inference_mode():
@@ -192,11 +209,14 @@ class Trainer():
                     best_loss = valid_loss
 
                 # Save best state dict as CPU tensors for portability
-                self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
+                self.best_state_dict = {k: v.cpu() for k, v in 
+                                        self.model.state_dict().items()}
 
-                torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+                torch.save(self.best_state_dict, 
+                           Path(self.out_dir, "best_model_state_dict.pt"))
 
-                self.logger.info("Saved best model state dict at epoch %d", epoch + 1)
+                self.logger.info("Saved best model state dict at epoch %d", 
+                                 epoch + 1)
 
             else:
 
@@ -206,10 +226,14 @@ class Trainer():
                     best_loss = np.nanmean(valid_loss_batch)
 
                     # Save best state dict as CPU tensors for portability
-                    self.best_state_dict = {k: v.cpu() for k, v in self.model.state_dict().items()}
-                    torch.save(self.best_state_dict, Path(self.out_dir, "best_model_state_dict.pt"))
+                    self.best_state_dict = {k: v.cpu() for k, v in 
+                                            self.model.state_dict().items()}
+                    
+                    torch.save(self.best_state_dict, 
+                               Path(self.out_dir, "best_model_state_dict.pt"))
 
-                    self.logger.info("Saved best model state dict at epoch %d", epoch + 1)
+                    self.logger.info("Saved best model state dict at epoch %d", 
+                                     epoch + 1)
 
             if patience > self.patience:
                 self.logger.info("Early stopping")
@@ -219,13 +243,17 @@ class Trainer():
         # The saved best_state_dict uses CPU tensors for portability, so
         # explicitly map them to the model device to avoid any device
         # mismatch surprises at runtime.
-        state_to_load = {k: v.to(self.device) for k, v in self.best_state_dict.items()}
+        state_to_load = {k: v.to(self.device) for k, v in 
+                         self.best_state_dict.items()}
+        
         self.model.load_state_dict(state_to_load)
 
         # ensure model is on device (no-op if already there)
         self.model = self.model.to(self.device)
-        self.logger.info("Load state dict of model with best loss: %.8f", best_loss)
+        self.logger.info("Load state dict of model with best loss: %.8f", 
+                         best_loss)
 
-        self.loss_epoch = pd.DataFrame({"train_loss": train_loss_epoch, "valid_loss": valid_loss_epoch})
+        self.loss_epoch = pd.DataFrame({"train_loss": train_loss_epoch, 
+                                        "valid_loss": valid_loss_epoch})
 
         return self.model

@@ -13,14 +13,12 @@ Typical keys include data paths, model hyperparameters and an optional
 `init_model_state_dict` entry pointing to a checkpoint file.
 """
 
-import torch
-from pathlib import Path
-from collections import OrderedDict
 from hydroecolstm_lite.data.read_data import read_train_valid_test_data
 from hydroecolstm_lite.data.read_data import get_scaler_name
 from hydroecolstm_lite.data.scaler import Scaler
 from hydroecolstm_lite.model.create_model import create_model
 from hydroecolstm_lite.train.trainer import Trainer
+from hydroecolstm_lite.utility.load_state_dict import load_state_dict
 
 
 def run_config(config):
@@ -52,7 +50,8 @@ def run_config(config):
     scaler = {}
 
     scaler["timeseries_data"] = Scaler()
-    scaler["timeseries_data"].fit(data["timeseries_data_train"], col_scaler_timeseries)
+    scaler["timeseries_data"].fit(data["timeseries_data_train"], 
+                                  col_scaler_timeseries)
 
     scaler["static_data"] = Scaler()
     scaler["static_data"].fit(data["static_data"], col_scaler_static)
@@ -70,25 +69,9 @@ def run_config(config):
 
     # optionally initialise model weights from a checkpoint
     if "init_model_state_dict" in config.keys():
-        state_dict_file = Path(config["init_model_state_dict"][0])
-
-        if state_dict_file.exists():
-
-            # Load state dict to CPU first for compatibility
-            state = torch.load(state_dict_file, map_location="cpu")
-
-            # If checkpoint is a wrapper dict, extract the actual state_dict
-            if isinstance(state, dict) and ("state_dict" in state or "model_state_dict" in state):
-                state = state.get("state_dict", state.get("model_state_dict"))
-
-            # Strip 'module.' prefix from keys saved from DataParallel wrappers
-            new_state = OrderedDict()
-
-            for k, v in state.items():
-                name = k[7:] if k.startswith("module.") else k
-                new_state[name] = v
-
-            model.load_state_dict(new_state)
+        model = create_model(config, config["init_model_state_dict"][0])
+    else:
+        model = create_model(config)
 
     trainer = Trainer(config, model)
 
