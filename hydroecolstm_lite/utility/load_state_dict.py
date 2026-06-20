@@ -1,9 +1,12 @@
 
 
 import torch
+from pathlib import Path
 from collections import OrderedDict
 
 def load_state_dict(model, state_dict_file=None):
+    
+    state_dict_file = Path(state_dict_file)
     
     if state_dict_file.exists():
 
