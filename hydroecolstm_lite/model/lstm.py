@@ -1,6 +1,7 @@
 
 import torch
 from torch import nn
+from hydroecolstm_lite.model.revin import revin
 
 """LSTM + fully-connected head model used for sequence regression.
 
@@ -49,6 +50,8 @@ class lstm(nn.Module):
         # Fully-connected layer connect hidden and output
         self.fc = nn.Linear(self.hidden_size, len(self.target_features))
         
+        self.revin = revin(n_features=len(self.input_features))
+        
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass.
 
@@ -63,6 +66,7 @@ class lstm(nn.Module):
             Predicted sequence with the same time dimension as the input.
         """
         
+        x = self.revin(x, mode="norm")
         y_predict, _ = self.lstm(x)
 
         return self.fc(y_predict)
