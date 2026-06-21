@@ -18,7 +18,6 @@ from hydroecolstm_lite.data.read_data import get_scaler_name
 from hydroecolstm_lite.data.scaler import Scaler
 from hydroecolstm_lite.model.create_model import create_model
 from hydroecolstm_lite.train.trainer import Trainer
-from hydroecolstm_lite.utility.load_state_dict import load_state_dict
 
 
 def run_config(config):

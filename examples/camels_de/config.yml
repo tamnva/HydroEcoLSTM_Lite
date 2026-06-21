@@ -21,104 +21,35 @@ device: gpu
 
 # Input catchment attributes
 input_static_features:
-  - p_mean
-  - p_seasonality
-  - frac_snow
-  - high_prec_freq
-  - high_prec_dur
-  - low_prec_freq
-  - low_prec_dur
-  - dams_num
-  - aquitard_perc
-  - aquifer_perc
-  - aquifer_aquitard_mixed_perc
-  - kf_high_perc
-  - kf_medium_perc
-  - kf_moderate_perc
-  - kf_low_perc
-  - kf_very_low_perc
-  - kf_extremely_low_perc
-  - kf_very_high_to_high_perc
-  - kf_medium_to_moderate_perc
-  - kf_low_to_extremely_low_perc
-  - kf_highly_variable_perc
-  - kf_moderate_to_low_perc
-  - cavity_fissure_perc
-  - cavity_pores_perc
-  - cavity_fissure_karst_perc
-  - cavity_fissure_pores_perc
-  - rocktype_sediment_perc
-  - rocktype_metamorphite_perc
-  - rocktype_magmatite_perc
-  - consolidation_solid_rock_perc
-  - consolidation_unconsolidated_rock_perc
-  - geochemical_rocktype_silicate_perc
-  - geochemical_rocktype_silicate_carbonatic_perc
-  - geochemical_rocktype_carbonatic_perc
-  - geochemical_rocktype_sulfatic_perc
-  - geochemical_rocktype_silicate_organic_components_perc
-  - geochemical_rocktype_anthropogenically_modified_through_filling_perc
-  - geochemical_rocktype_sulfatic_halitic_perc
-  - geochemical_rocktype_halitic_perc
-  - waterbody_perc
-  - no_data_perc
-  - q_mean
-  - runoff_ratio
-  - flow_perc_complete
-  - slope_fdc
-  - hfd_mean
-  - Q5
-  - Q95
-  - high_q_freq
-  - high_q_dur
-  - low_q_freq
-  - low_q_dur
-  - zero_q_freq
+  - area
+  - slope_deg
+  - elev_mean 
+  - clay_0_30cm_mean
+  - sand_0_30cm_mean
+  - silt_0_30cm_mean
   - artificial_surfaces_perc
   - agricultural_areas_perc
   - forests_and_seminatural_areas_perc
   - wetlands_perc
   - water_bodies_perc
-  - clay_0_30cm_mean
-  - clay_30_100cm_mean
-  - clay_100_200cm_mean
-  - silt_0_30cm_mean
-  - silt_30_100cm_mean
-  - silt_100_200cm_mean
-  - sand_0_30cm_mean
-  - sand_30_100cm_mean
-  - sand_100_200cm_mean
-  - coarse_fragments_0_30cm_mean
-  - coarse_fragments_30_100cm_mean
-  - coarse_fragments_100_200cm_mean
-  - bulk_density_0_30cm_mean
-  - bulk_density_30_100cm_mean
-  - bulk_density_100_200cm_mean
-  - soil_organic_carbon_0_30cm_mean
-  - soil_organic_carbon_30_100cm_mean
-  - soil_organic_carbon_100_200cm_mean
-  - gauge_lat
-  - gauge_lon
-  - gauge_easting
-  - gauge_northing
-  - area_metadata
-  - gauge_elev
-  - area
-  - elev_mean
-  - elev_min
-  - elev_5
-  - elev_50
-  - elev_95
-  - elev_max
+  - p_mean
+  - p_seasonality
+  - frac_snow
+  - high_prec_freq
+  - low_prec_freq
+  - high_prec_dur
+  - low_prec_dur
+  - dams_num
+  - aquifer_perc
+  - aquitard_perc
 
-# Input time series features
 input_timeseries_features:
-  - pr
-  - tasmin
-  - tasmax
-  - hurs
+  - precipitation_mean
+  - precipitation_stdev
+  - radiation_global_mean
+  - temperature_min
+  - temperature_max
 
-# Target features, multiple target features also works
 target_features:
   - discharge_spec_obs
 
@@ -127,7 +58,7 @@ train_period:
   - 1980-01-01 00:00
   - 2005-12-31 00:00
  
-# Validation perio
+# Validation period
 valid_period: 
   - 2006-01-01 00:00
   - 2010-12-31 00:00
@@ -141,7 +72,7 @@ test_period:
 # or leave it like this if and the model will state random 
 # initial state dicts if file does not exist
 init_model_state_dict:
-  - C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_de/best_model_state_dict.pt
+  - /gpfs1/schlecker/home/nguyenta/gpu_test/lstm_de/none.pt
   
 # Model head architect
 Regression:
@@ -164,21 +95,21 @@ scaler_target_features:
   - z_score
 
 # Hidden size
-hidden_size: 150 
+hidden_size: 50
 
 # Number of lstm layer
 num_layers: 1
 
 # Number of epoch
-n_epochs: 50
+n_epochs: 1000
 
 # Learning rates, linearly decrease from epoch 1 to last epoch
 learning_rate: 
   - 0.001
   - 0.00001
 
-# Drop out
-dropout: 0.1   
+# Drop out change from dropout 0.15 => 0.25, nepoch 100 => 150, hs 150 => 175 (before loss 0.151 and NSE 0.827)
+dropout: 0.20   
 
 # Warmup period, output of the first warmup_length timsteps will be omit
 # when calulating the loss function
@@ -190,17 +121,17 @@ loss_function: NSE_complement
 # Sequence length, should be at least > warmup_length
 # If you want to predict last, use sequence_length = warmup_length + 1
 # but this will be extremely time consuming
-sequence_length: 1800
+sequence_length: 1500
 
 # Batch size 
-batch_size: 10
+batch_size: 35
 
 # Model will stop after {patience} epochs if no improvement in the validation loss
-patience: 50
+patience: 1000
 
 # start and ending of the inference period, must be in yyyy-mm-dd hh:mm format
 inference_period: 
-  - 2019-01-01 00:00
+  - 1999-01-01 00:00
   - 2100-12-31 00:00
 
 # Catchment id for training
