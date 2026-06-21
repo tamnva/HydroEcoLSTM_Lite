@@ -2,15 +2,8 @@
 timeseries_data_file: &timeseries_file
   - will_be_updated_inside the main.py file or update here
 
-# Path to catchment attributes data for training, validation, and testing
-static_data_file:  &static_file
-  - will_be_updated_inside the main.py file or update here
-
 # Optional: Path to time series data for inference
 timeseries_data_file_inference: *timeseries_file
-
-# # Optional: Path to catchment attributes data for inference
-static_data_file_inference: *static_file
 
 # Path to output directory, to save best model state dict
 output_directory:
@@ -18,30 +11,6 @@ output_directory:
 
 # Device to use for training: 'cpu', 'cuda'/'gpu', or 'auto' to pick GPU if available
 device: gpu
-
-# Input catchment attributes
-input_static_features:
-  - area
-  - slope_deg
-  - elev_mean 
-  - clay_0_30cm_mean
-  - sand_0_30cm_mean
-  - silt_0_30cm_mean
-  - artificial_surfaces_perc
-  - agricultural_areas_perc
-  - forests_and_seminatural_areas_perc
-  - wetlands_perc
-  - water_bodies_perc
-  - p_mean
-  - p_seasonality
-  - frac_snow
-  - high_prec_freq
-  - low_prec_freq
-  - high_prec_dur
-  - low_prec_dur
-  - dams_num
-  - aquifer_perc
-  - aquitard_perc
 
 input_timeseries_features:
   - precipitation_mean
@@ -84,10 +53,6 @@ Regression:
 
 # Transformation of input timeseries features: z_score, min_max, or none
 scaler_input_timeseries_features:
-  - z_score
-
-# Transformation of input static features: z_score, min_max, or none
-scaler_input_static_features:
   - z_score
 
 # Transformation of target features: z_score, min_max, or none

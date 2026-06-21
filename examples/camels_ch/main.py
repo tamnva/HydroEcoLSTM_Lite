@@ -32,7 +32,8 @@ data_scaled, scaler, model, trainer = run_config(config)
 
 # Combine time series and statics
 test_data_scaled = combine_timeseries_static(
-    data_scaled['timeseries_data_test'], data_scaled['static_data'], model)
+    data_scaled['timeseries_data_test'], 
+    data_scaled['static_data'], model)
 
 # Run inference with test data
 model.eval()

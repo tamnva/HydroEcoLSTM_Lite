@@ -44,7 +44,6 @@ def run_config(config):
 
     # Transform timeseries and static attributes
     col_scaler_timeseries = get_scaler_name(config, True)
-    col_scaler_static = get_scaler_name(config, False)
 
     scaler = {}
 
@@ -52,8 +51,10 @@ def run_config(config):
     scaler["timeseries_data"].fit(data["timeseries_data_train"], 
                                   col_scaler_timeseries)
 
-    scaler["static_data"] = Scaler()
-    scaler["static_data"].fit(data["static_data"], col_scaler_static)
+    if "input_static_features" in config.keys(): 
+        col_scaler_static = get_scaler_name(config, False) 
+        scaler["static_data"] = Scaler()
+        scaler["static_data"].fit(data["static_data"], col_scaler_static)
 
     data_scaled = {}
 
@@ -61,8 +62,11 @@ def run_config(config):
         if "timeseries_data" in key:
             data_scaled[key] = scaler["timeseries_data"].transform(data[key])
         else:
-            data_scaled[key] = scaler["static_data"].transform(data[key])
-
+            if "input_static_features" in config.keys(): 
+                data_scaled[key] = scaler["static_data"].transform(data[key])
+            else:
+                data_scaled[key] = None
+                
     # create model from config
     model = create_model(config)
 

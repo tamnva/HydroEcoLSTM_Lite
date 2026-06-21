@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from typing import Optional
 from torch.utils.data import DataLoader
 from hydroecolstm_lite.utility.get_device import get_device
 from hydroecolstm_lite.utility.logger import get_logger
@@ -56,7 +57,7 @@ class Trainer():
     # Train function
     def train(self, timeseries_data_train: pd.DataFrame, 
               timeseries_data_valid: pd.DataFrame, 
-              static_data: pd.DataFrame):
+              static_data: Optional[pd.DataFrame] = None):
         
         """Run the training loop and perform validation each epoch.
 
@@ -74,7 +75,11 @@ class Trainer():
         torch.nn.Module
             The trained model (with best weights loaded).
         """
-
+        
+        # If there is no static input, input static data should be None
+        if self.input_static_features is None:
+            static_data = None
+            
         # Make sure column names order as in the model
         col_names = (["id", "time"] + 
                      self.input_timeseries_features + 
@@ -85,17 +90,17 @@ class Trainer():
         timeseries_data_valid = timeseries_data_valid[col_names]
 
         # Create custom dataset
-        xy_train = CustomDataset(timeseries_data_train, 
-                                 static_data, 
-                                 self.model, 
+        xy_train = CustomDataset(self.model, 
                                  self.warmup_length, 
-                                 self.sequence_length)
+                                 self.sequence_length,
+                                 timeseries_data_train, 
+                                 static_data)
 
-        xy_valid = CustomDataset(timeseries_data_valid, 
-                                 static_data, 
-                                 self.model, 
+        xy_valid = CustomDataset(self.model, 
                                  self.warmup_length, 
-                                 self.sequence_length)
+                                 self.sequence_length,
+                                 timeseries_data_valid, 
+                                 static_data)
         
         self.logger.info("Number of iteration per epoch = %d", 
                          int(xy_train.__len__() / self.batch_size))
