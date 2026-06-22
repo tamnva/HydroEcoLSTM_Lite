@@ -30,14 +30,13 @@ class lstm(nn.Module):
         self.dropout = config["dropout"]*min(1.0, self.num_layers - 1.0)
         self.input_timeseries_features = config["input_timeseries_features"]
         
-        # Columns of input tensor should follow this order
-        self.input_features = self.input_timeseries_features
-        
         if "input_static_features" in config.keys(): 
             self.input_static_features = config["input_static_features"]
-            self.input_features += self.input_static_features
+            self.input_features = (self.input_timeseries_features + 
+                                   self.input_static_features)
         else:
             self.input_static_features = None
+            self.input_features = self.input_timeseries_features
     
         
         # Columns of output tensor will be this order
