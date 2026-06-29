@@ -13,9 +13,6 @@ Typical keys include data paths, model hyperparameters and an optional
 `init_model_state_dict` entry pointing to a checkpoint file.
 """
 
-import torch
-from pathlib import Path
-from collections import OrderedDict
 from hydroecolstm_lite.data.read_data import read_train_valid_test_data
 from hydroecolstm_lite.data.read_data import get_scaler_name
 from hydroecolstm_lite.data.scaler import Scaler
@@ -47,15 +44,17 @@ def run_config(config):
 
     # Transform timeseries and static attributes
     col_scaler_timeseries = get_scaler_name(config, True)
-    col_scaler_static = get_scaler_name(config, False)
 
     scaler = {}
 
     scaler["timeseries_data"] = Scaler()
-    scaler["timeseries_data"].fit(data["timeseries_data_train"], col_scaler_timeseries)
+    scaler["timeseries_data"].fit(data["timeseries_data_train"], 
+                                  col_scaler_timeseries)
 
-    scaler["static_data"] = Scaler()
-    scaler["static_data"].fit(data["static_data"], col_scaler_static)
+    if "input_static_features" in config.keys(): 
+        col_scaler_static = get_scaler_name(config, False) 
+        scaler["static_data"] = Scaler()
+        scaler["static_data"].fit(data["static_data"], col_scaler_static)
 
     data_scaled = {}
 
@@ -63,32 +62,19 @@ def run_config(config):
         if "timeseries_data" in key:
             data_scaled[key] = scaler["timeseries_data"].transform(data[key])
         else:
-            data_scaled[key] = scaler["static_data"].transform(data[key])
-
+            if "input_static_features" in config.keys(): 
+                data_scaled[key] = scaler["static_data"].transform(data[key])
+            else:
+                data_scaled[key] = None
+                
     # create model from config
     model = create_model(config)
 
     # optionally initialise model weights from a checkpoint
     if "init_model_state_dict" in config.keys():
-        state_dict_file = Path(config["init_model_state_dict"][0])
-
-        if state_dict_file.exists():
-
-            # Load state dict to CPU first for compatibility
-            state = torch.load(state_dict_file, map_location="cpu")
-
-            # If checkpoint is a wrapper dict, extract the actual state_dict
-            if isinstance(state, dict) and ("state_dict" in state or "model_state_dict" in state):
-                state = state.get("state_dict", state.get("model_state_dict"))
-
-            # Strip 'module.' prefix from keys saved from DataParallel wrappers
-            new_state = OrderedDict()
-
-            for k, v in state.items():
-                name = k[7:] if k.startswith("module.") else k
-                new_state[name] = v
-
-            model.load_state_dict(new_state)
+        model = create_model(config, config["init_model_state_dict"][0])
+    else:
+        model = create_model(config)
 
     trainer = Trainer(config, model)
 

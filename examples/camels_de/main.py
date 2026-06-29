@@ -3,14 +3,17 @@ import numpy as np
 from pathlib import Path
 from hydroecolstm_lite.data.read_config import read_config
 from hydroecolstm_lite.data.read_data import combine_timeseries_static
-from hydroecolstm_lite.data.read_data import read_scale_inference_data
 from hydroecolstm_lite.model.create_model import create_model
 from hydroecolstm_lite.utility.get_device import get_device
 from hydroecolstm_lite.utility.logger import get_logger
-from hydroecolstm_lite.model_run import run_config
 from hydroecolstm_lite.utility.evaluation_function import nse
+from hydroecolstm_lite.data.read_data import read_train_valid_test_data
+from hydroecolstm_lite.data.read_data import get_scaler_name
+from hydroecolstm_lite.data.scaler import Scaler
+
 
 # Read configuration file, please modify the path to the config.yml file
+# lstm_data_dir = "/gpfs1/schlecker/home/nguyenta/gpu_test/kit_de"
 lstm_data_dir = "C:/Users/nguyenta/Documents/GitHub/HydroEcoLSTM_Lite/examples/camels_de"
 
 # Read and update config file
@@ -28,10 +31,37 @@ logger = get_logger(config)
 #-----------------------------------------------------------------------------#
 #             The code within this section is used for training               #
 #-----------------------------------------------------------------------------#
-# Just train for scratch, don't use initial state dict
-del config["init_model_state_dict"]
+data = read_train_valid_test_data(config)
 
-data_scaled, scaler, model, trainer = run_config(config)
+# Transform timeseries and static attributes
+col_scaler_timeseries = get_scaler_name(config, True)
+col_scaler_static = get_scaler_name(config, False)
+
+scaler = {}
+
+scaler["timeseries_data"] = Scaler()
+scaler["timeseries_data"].fit(data["timeseries_data_train"], 
+                              col_scaler_timeseries)
+
+scaler["static_data"] = Scaler()
+scaler["static_data"].fit(data["static_data"], col_scaler_static)
+
+data_scaled = {}
+
+for key in data.keys():
+    if "timeseries_data" in key:
+        data_scaled[key] = scaler["timeseries_data"].transform(data[key])
+    else:
+        data_scaled[key] = scaler["static_data"].transform(data[key])    
+
+model = create_model(config, Path(lstm_data_dir, "state_dict.pt"))
+
+# Save data and model
+# torch.save(scaler, Path(lstm_data_dir, "scaler.pt"))
+# torch.save(data_scaled, Path(lstm_data_dir, "data_scaled.pt"))
+
+scaler = torch.load(Path(lstm_data_dir, "scaler.pt"), weights_only=False)
+data_scaled = torch.load(Path(lstm_data_dir, "data_scaled.pt"), weights_only=False)
 
 # Combine time series and statics
 test_data = combine_timeseries_static(
@@ -39,100 +69,35 @@ test_data = combine_timeseries_static(
     data_scaled['static_data'], model
     )
 
-# Create dataframe to store results from test data
-simulated = test_data[["id", "time"]].copy()
-simulated["discharge_spec_obs"] = np.nan
+basin_orig = test_data[test_data["id"] == "DE110000"].copy()
+basin_mod = test_data[test_data["id"] == "DE110000"].copy()
 
-# Convert test data to model input
-test_data = torch.tensor(
-    test_data[model.input_features].values, 
-    dtype=torch.float32
-    )
+# Transform basin attributes to normal => modify => transform again
+basin_mod = scaler["static_data"].inverse(basin_mod)
+basin_mod["slope_deg"] = basin_mod["slope_deg"] 
+basin_mod["area"] = basin_mod["area"]*10
+basin_mod = scaler["static_data"].transform(basin_mod)
 
-# Split to chunk to save memory
-test_data = torch.split(
-    test_data, 
-    int(test_data.shape[0]/len(config["id_test"])), 
-    dim=0
-    )    
-    
-# Now forward pass to get simulated streamflow (scaled data)
+basin_orig_tensor = torch.tensor(basin_orig[model.input_features].values, dtype=torch.float32)
+basin_mod_tensor = torch.tensor(basin_mod[model.input_features].values, dtype=torch.float32)
+
+
+simulated_orig = basin_orig[["id", "time"]].copy()
+simulated_orig["discharge_spec_obs"] = np.nan
+
+simulated_mod = basin_mod[["id", "time"]].copy()
+simulated_mod["discharge_spec_obs"] = np.nan
+
+
 model.eval()
 with torch.inference_mode():
     # ensure model and inputs are on the same device to avoid device mismatch
-    device = get_device(config)
-    model = model.to(device)
-    for ids, chunk in zip(simulated["id"].unique().tolist(), test_data):
-        logger.info("Running inference for id %s", ids)
-        mask = simulated["id"] == ids
-        out = model(chunk.to(device)).squeeze().detach().cpu().numpy()
-        simulated.loc[mask, "discharge_spec_obs"] = out
+    simulated_orig["discharge_spec_obs"] = model(basin_orig_tensor).squeeze().detach().numpy()
+    simulated_mod["discharge_spec_obs"] = model(basin_mod_tensor).squeeze().detach().numpy()
 
-# Get NSE test period for each basins
-data_scaled['timeseries_data_test']["simulated"] = (
-    simulated["discharge_spec_obs"]
-    )
 
-nse_val = (data_scaled['timeseries_data_test'].
- groupby("id", observed=True).
- apply(lambda g: nse(g["simulated"], g["discharge_spec_obs"], 
-                     config["warmup_length"]), 
-                     include_groups=False).
- rename("nse").reset_index())
-nse_val["nse"].median()
+simulated_orig = scaler["timeseries_data"].inverse(simulated_orig)
+simulated_mod = scaler["timeseries_data"].inverse(simulated_mod)
 
-# Save simulated streamflow (transform back to original value mm/day)
-scaler["timeseries_data"].inverse(simulated).to_csv(
-    Path(lstm_data_dir, "test_data.csv"), index=False
-    )
-
-#-----------------------------------------------------------------------------#
-#                              Inference data                                 #
-#-----------------------------------------------------------------------------#
-# Load scaler
-scaler = torch.load(Path(lstm_data_dir, "scaler.pt"))
-
-# Create model 
-model = create_model(config)
-
-# Load state dict
-device = get_device(config)
-
-# Load state dict (map to CPU first then move model to device)
-state_dict = torch.load(Path(lstm_data_dir, "best_model_state_dict.pt"), map_location='cpu')
-model.load_state_dict(state_dict)
-model = model.to(device)
-
-# Read and scale inference data
-inference_data = read_scale_inference_data(config, scaler)
-
-inference_data = combine_timeseries_static(
-    inference_data["inference_timeseries_data"], 
-    inference_data["inference_static_data"], 
-    model)
-
-simulated = inference_data[["id", "time"]].copy()
-simulated["discharge_spec_obs"] = np.nan
-
-inference_data = torch.tensor(
-    inference_data[model.input_features].values,
-    dtype=torch.float32
-    )
-
-inference_data = torch.split(
-    inference_data, 
-    int(inference_data.shape[0]/len(config["id_inference"])), 
-    dim=0
-    )    
-    
-model.eval()
-with torch.inference_mode():
-    for ids, chunk in zip(simulated["id"].unique().tolist(), inference_data):
-        mask = simulated["id"] == ids 
-        out = model(chunk.to(device)).squeeze().detach().cpu().numpy()
-        simulated.loc[mask, "discharge_spec_obs"] = out
-
-scaler["timeseries_data"].inverse(simulated).to_csv(
-    Path(lstm_data_dir, "de_sim_discharge_update.csv"), 
-    index=False)
-
+simulated_orig["new"] = simulated_mod["discharge_spec_obs"]
+simulated_orig.plot(x="time",y=["discharge_spec_obs", "new"])

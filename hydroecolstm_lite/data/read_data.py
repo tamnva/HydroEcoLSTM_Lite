@@ -145,7 +145,7 @@ def read_inference_data(config: dict = None, keep_target_features: bool = True) 
     del timeseries_data
 
     # Read static input data file
-    if "input_static_features" in config:
+    if "input_static_features" in config.keys():
 
         require_columns = ["id", *config["input_static_features"]]
 
@@ -162,7 +162,8 @@ def read_inference_data(config: dict = None, keep_target_features: bool = True) 
     else:
         static_data = None
 
-    return {"inference_timeseries_data": inference_data, "inference_static_data": static_data}
+    return {"inference_timeseries_data": inference_data, 
+            "inference_static_data": static_data}
 
 
 #-----------------------------------------------------------------------------#
@@ -192,9 +193,9 @@ def read_scale_inference_data(config, scaler, keep_target_features: bool = True)
         inference_data["inference_timeseries_data"]
     )
 
-    inference_data["inference_static_data"] = scaler["static_data"].transform(
-        inference_data["inference_static_data"]
-    )
+    if "input_static_features" in config.keys():
+        inference_data["inference_static_data"] = scaler["static_data"].transform( 
+            inference_data["inference_static_data"])
 
     return inference_data
 
@@ -214,8 +215,10 @@ def get_scaler_name(config, timeseries=True):
             zip(
                 config["input_timeseries_features"] + config["target_features"],
 
-                len(config["input_timeseries_features"]) * config["scaler_input_timeseries_features"]
-                + len(config["target_features"]) * config["scaler_target_features"],
+                len(config["input_timeseries_features"]) * 
+                config["scaler_input_timeseries_features"]
+                + len(config["target_features"]) * 
+                config["scaler_target_features"],
             )
         )
     else:
@@ -232,7 +235,11 @@ def get_scaler_name(config, timeseries=True):
 #-----------------------------------------------------------------------------#
 #          Combine static and dynmiac method for the model                    #
 #-----------------------------------------------------------------------------#
-def combine_timeseries_static(timeseries_data: pd.DataFrame, static_data: pd.DataFrame, model, keep_target_features=True):
+def combine_timeseries_static(timeseries_data: pd.DataFrame, 
+                              static_data: pd.DataFrame, 
+                              model, 
+                              keep_target_features=True):
+    
     """Combine timeseries rows with static attributes for model input.
 
     Parameters
@@ -254,7 +261,9 @@ def combine_timeseries_static(timeseries_data: pd.DataFrame, static_data: pd.Dat
     """
 
     if keep_target_features:
-        col_names = (["id", "time"] + model.input_timeseries_features + model.target_features)
+        col_names = (["id", "time"] + 
+                     model.input_timeseries_features + 
+                     model.target_features)
     else:
         col_names = ["id", "time"] + model.input_timeseries_features
 
@@ -262,9 +271,11 @@ def combine_timeseries_static(timeseries_data: pd.DataFrame, static_data: pd.Dat
     combined_data = timeseries_data[col_names].copy()
 
     # Now join time series and static data together
-    for name in model.input_static_features:
-        combined_data[name] = combined_data["id"].map(static_data[name]).astype("float32")
-
+    if model.input_static_features is not None:
+        for name in model.input_static_features:
+            combined_data[name] = combined_data["id"].map(
+                static_data[name]).astype("float32")
+    
     return combined_data
     
     
